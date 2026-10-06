@@ -1,0 +1,14 @@
+interface:
+  display_name: Web Security Audit
+  short_description: Audit frontend and backend web application security
+  default_prompt: Use $web-security-audit to audit this web application, substantiate
+    findings, and prioritize fixes.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

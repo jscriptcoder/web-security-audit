@@ -1,0 +1,100 @@
+diff --git a/package.json b/package.json
+index 3f1c2a9..8b7e4d0 100644
+--- a/package.json
++++ b/package.json
+@@ -12,6 +12,7 @@
+   "dependencies": {
+     "dompurify": "^3.1.6",
++    "markdown-it": "^14.1.0",
+     "react": "18.2.0",
+     "react-dom": "18.2.0",
+     "react-router-dom": "^6.22.3"
+diff --git a/src/components/MarkdownBody.tsx b/src/components/MarkdownBody.tsx
+new file mode 100644
+index 0000000..a41c9e2
+--- /dev/null
++++ b/src/components/MarkdownBody.tsx
+@@ -0,0 +1,13 @@
++import MarkdownIt from 'markdown-it';
++
++const md = new MarkdownIt({
++  html: true,
++  linkify: true,
++  typographer: true,
++});
++
++export function MarkdownBody({ source }: { source: string }) {
++  return <div className="markdown-body" dangerouslySetInnerHTML={{ __html: md.render(source) }} />;
++}
++
++export default MarkdownBody;
+diff --git a/src/components/CommentList.tsx b/src/components/CommentList.tsx
+index 77d02be..c5a19f3 100644
+--- a/src/components/CommentList.tsx
++++ b/src/components/CommentList.tsx
+@@ -1,4 +1,5 @@
+ import { Comment } from '../api/comments';
++import { MarkdownBody } from './MarkdownBody';
+
+ export function CommentList({ comments }: { comments: Comment[] }) {
+   return (
+@@ -6,7 +7,7 @@ export function CommentList({ comments }: { comments: Comment[] }) {
+       {comments.map((c) => (
+         <li key={c.id}>
+           <a href={`/users/${encodeURIComponent(c.authorId)}`}>{c.authorName}</a>
+-          <p>{c.text}</p>
++          <MarkdownBody source={c.text} />
+         </li>
+       ))}
+     </ul>
+diff --git a/src/components/CommentComposer.tsx b/src/components/CommentComposer.tsx
+index 1d9e5a0..4f0b7c2 100644
+--- a/src/components/CommentComposer.tsx
++++ b/src/components/CommentComposer.tsx
+@@ -1,5 +1,6 @@
+ import { FormEvent, useState } from 'react';
+ import { postComment } from '../api/comments';
++import { MarkdownBody } from './MarkdownBody';
+
+ export function CommentComposer({ productSku }: { productSku: string }) {
+   const [text, setText] = useState('');
+@@ -14,6 +15,8 @@ export function CommentComposer({ productSku }: { productSku: string }) {
+     <form onSubmit={onSubmit}>
+       <textarea value={text} onChange={(e) => setText(e.target.value)} />
++      <h3>Preview</h3>
++      <MarkdownBody source={text} />
+       <button type="submit">Post</button>
+     </form>
+   );
+diff --git a/src/hooks/useCheckoutStatus.ts b/src/hooks/useCheckoutStatus.ts
+new file mode 100644
+index 0000000..9be2f17
+--- /dev/null
++++ b/src/hooks/useCheckoutStatus.ts
+@@ -0,0 +1,26 @@
++import { useEffect, useState } from 'react';
++
++const CHECKOUT_ORIGIN = 'https://checkout.partner-pay.com';
++
++type CheckoutStatus = 'idle' | 'pending' | 'paid' | 'failed';
++
++const STATUSES: readonly CheckoutStatus[] = ['pending', 'paid', 'failed'];
++
++export function useCheckoutStatus(frame: HTMLIFrameElement | null): CheckoutStatus {
++  const [status, setStatus] = useState<CheckoutStatus>('idle');
++
++  useEffect(() => {
++    function onMessage(event: MessageEvent) {
++      if (event.origin !== CHECKOUT_ORIGIN) return;
++      if (!frame || event.source !== frame.contentWindow) return;
++      const next = event.data?.status;
++      if (STATUSES.includes(next)) setStatus(next);
++    }
++    window.addEventListener('message', onMessage);
++    return () => window.removeEventListener('message', onMessage);
++  }, [frame]);
++
++  return status;
++}
++
++export default useCheckoutStatus;

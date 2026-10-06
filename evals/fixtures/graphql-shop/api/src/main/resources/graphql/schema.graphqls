@@ -1,0 +1,48 @@
+type Query {
+    product(id: ID!): Product
+    products(first: Int = 20): [Product!]!
+    me: Customer
+    order(id: ID!): Order
+}
+
+type Mutation {
+    redeemGiftCard(code: String!): RedeemResult!
+}
+
+type Product {
+    id: ID!
+    name: String!
+    price: Float!
+    reviews: [Review!]!
+}
+
+type Review {
+    id: ID!
+    rating: Int!
+    body: String!
+    author: Customer!
+}
+
+type Customer {
+    id: ID!
+    displayName: String!
+    email: String!
+    phone: String
+    creditBalance: Float!
+    orders: [Order!]!
+}
+
+type Order {
+    id: ID!
+    total: Float!
+    status: String!
+    shippingAddress: String!
+    customer: Customer!
+    internalNotes: String
+}
+
+type RedeemResult {
+    success: Boolean!
+    creditBalance: Float
+    message: String
+}

@@ -1,0 +1,8 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Eval runs belong in a sibling *-workspace/ directory, never in the skill
+*-workspace/

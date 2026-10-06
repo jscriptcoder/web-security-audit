@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/orders
+    username: orders
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://auth.example.com/.well-known/jwks.json
+  mail:
+    host: smtp.example.com
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

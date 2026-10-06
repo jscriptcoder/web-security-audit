@@ -1,0 +1,94 @@
+{
+  "skill_name": "web-security-audit",
+  "evals": [
+    {
+      "id": 1,
+      "name": "frontend-only-react-audit",
+      "prompt": "Can you do a security audit of our React storefront in evals/fixtures/react-shop? It's the frontend only, the API lives in another repo that I don't have access to. Write the report to a markdown file.",
+      "expected_output": "A frontend-only audit report that finds the planted client-side issues, avoids the planted false positives, records backend suspicions as handoff hypotheses and names the backend as omitted scope instead of filling the ledger with blocked rows.",
+      "files": [
+        "evals/fixtures/react-shop/"
+      ],
+      "expectations": [
+        "Reports stored XSS in src/components/Review.tsx: marked output inserted with dangerouslySetInnerHTML without sanitization",
+        "Reports the javascript: URL risk of href={profile.website} in src/pages/ProfilePage.tsx and relates it to React 18.2 not blocking javascript: URLs",
+        "Reports src/pages/Login.tsx assigning the returnUrl query parameter to window.location.href (open redirect and/or javascript: URL execution)",
+        "Reports src/widgets/PartnerReceipt.tsx accepting messages via event.origin.includes(...) and writing event data to innerHTML",
+        "Reports client-side path traversal: orderId from the route interpolated unencoded into the API path in src/api/orders.ts, including the POST cancel sink",
+        "Reports VITE_ADMIN_API_SECRET being shipped to the browser bundle as a secret exposure finding",
+        "Does not report the Stripe publishable key (VITE_STRIPE_PUBLISHABLE_KEY) as a secret or vulnerability",
+        "Does not report src/components/HelpTip.tsx (static i18n HTML) or src/components/Bio.tsx (DOMPurify-sanitized) as vulnerabilities",
+        "Does not report the search query rendering in src/pages/Search.tsx as XSS",
+        "Does not report missing anti-CSRF tokens as a vulnerability, given bearer-token authentication",
+        "Treats the profile update sending role/accountId and the client-only RequireRole guard as backend handoff hypotheses rather than confirmed findings",
+        "Names the backend as omitted scope instead of marking backend-only topics such as SQL injection or request smuggling as blocked",
+        "Notes that the CSP allows 'unsafe-inline' scripts, weakening XSS mitigation",
+        "Does not rate localStorage token storage as High or Critical on its own"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "spring-kotlin-backend-audit",
+      "prompt": "Please do a security review of our Spring Boot (Kotlin) orders service in evals/fixtures/spring-orders before release. Source review only, nothing is deployed for you to test. Save the report as a markdown file.",
+      "expected_output": "A backend audit report that finds the planted Spring/Kotlin issues with appropriate confidence labels, avoids the planted false positives and includes remediation and regression checks.",
+      "files": [
+        "evals/fixtures/spring-orders/"
+      ],
+      "expectations": [
+        "Reports broken object-level authorization on GET /api/orders/{id} (findById without a customer check)",
+        "Reports SQL injection in ReportRepository via Kotlin string templates for status and sort, recommending bound parameters and an allowlist for sort",
+        "Reports unauthenticated Actuator exposure: exposure.include \"*\" combined with permitAll on /actuator/** (for example heapdump or env)",
+        "Reports unsafe Java deserialization via ObjectInputStream on the uploaded file in /api/imports/legacy-orders",
+        "Does not claim confirmed remote code execution for the deserialization finding without an identified gadget chain",
+        "Reports XXE in XmlCatalogImporter (default DocumentBuilderFactory with parsed names echoed in the response)",
+        "Reports password-reset link poisoning via forwarded headers (forward-headers-strategy: framework with fromCurrentContextPath) and labels it as dependent on proxy behavior rather than confirmed",
+        "Reports missing issuer/audience validation of JWTs from the shared identity provider at a severity below Critical",
+        "Does not report disabled CSRF protection as a vulnerability, given the stateless bearer-token API",
+        "Does not report the UserRepository @Query with a named parameter as SQL injection",
+        "Does not report ResetTokenService token generation as predictable or weak",
+        "Gives each finding a stable identifier and a regression check"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "react-pr-diff-review",
+      "prompt": "Our frontend team opened a PR that adds markdown support to product comments: evals/fixtures/pr-diff/add-markdown-comments.diff. Can you security-review just this diff before we merge? Put your review in a markdown file.",
+      "expected_output": "A focused diff review that reports the markdown-it html:true XSS with a concrete fix, distinguishes stored from self-only impact, avoids the planted false positives and stays within the diff's scope.",
+      "files": [
+        "evals/fixtures/pr-diff/add-markdown-comments.diff"
+      ],
+      "expectations": [
+        "Reports stored XSS from markdown-it configured with html: true and rendered via dangerouslySetInnerHTML in CommentList for other users' comments",
+        "Recommends disabling html in markdown-it or sanitizing the rendered output (for example with the existing DOMPurify dependency) before insertion",
+        "Distinguishes the stored impact in CommentList from the self-only preview in CommentComposer",
+        "Does not report the useCheckoutStatus postMessage handler as vulnerable",
+        "Does not report the /users/${encodeURIComponent(c.authorId)} link as a vulnerability",
+        "Stays within the diff: does not produce a full coverage ledger of every Academy topic"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "graphql-monorepo-audit",
+      "prompt": "We use GraphQL across our apps. Can you do a security review of evals/fixtures/graphql-shop? It has the Spring for GraphQL API (Kotlin) and the React/Apollo web client. Source review only. Put the report in a markdown file.",
+      "expected_output": "A GraphQL-aware audit that finds authorization gaps on nested graph paths, alias-based brute force past a request-counting rate limit, missing cost limits, error leakage and the persisted Apollo cache surviving logout, while avoiding the planted false positives and keeping introspection/GraphiQL at Informational or Low.",
+      "files": [
+        "evals/fixtures/graphql-shop/"
+      ],
+      "expectations": [
+        "Reports that Review.author exposes the full Customer type (email, phone) to anyone browsing products, and that the unguarded Customer.orders resolver leaks other customers' orders through product { reviews { author { orders } } }",
+        "Notes that Query.order is correctly scoped to the caller and that the leak comes from a different graph path",
+        "Recommends fixing authorization in a layer shared by all paths (for example scoping Customer.orders to the caller or a separate public author type) rather than only at the root query",
+        "Reports that redeemGiftCard codes (6 digits) can be brute-forced with aliases or batching because the rate limit counts HTTP requests, not operations",
+        "Reports the check-then-act race in redeemGiftCard (no lock, version or conditional update) that lets one card be credited more than once",
+        "Reports missing query depth or complexity limits given the recursive Customer.orders / Order.customer relation, at a severity below High",
+        "Reports that GraphQlErrorResolver returns raw exception messages and class names to clients",
+        "Rates introspection being enabled and GraphiQL being enabled as Informational or Low at most",
+        "Does not report Order.internalNotes (guarded by @PreAuthorize with @EnableMethodSecurity) as a vulnerability",
+        "Does not report Query.order as an IDOR",
+        "Does not report CSRF as a vulnerability, given bearer-token authentication",
+        "Reports that the Apollo cache persisted to localStorage is not cleared on logout, linked to shared kiosk use",
+        "Does not report GraphQL queries in the web client bundle as a vulnerability"
+      ]
+    }
+  ]
+}
