@@ -10,9 +10,11 @@ Works with Claude Code and other agents that load `SKILL.md` skills. `agents/ope
 
 - **Frontend audits, including frontend-only repositories.** Escape hatches for React, Angular, Vue, Svelte, Solid, Lit and jQuery; SSR/hydration state; Next.js Server Actions; client-side open redirects and path traversal; secrets in bundles; token storage and logout; service workers; third-party scripts. When the API lives elsewhere, suspected backend issues become handoff notes for the backend team instead of noise.
 - **Backend audits across stacks.** Stack hint files for Java/Kotlin (Spring, Ktor), Node/TypeScript, Python, .NET, Go, PHP and Ruby: where entry points and authorization live, which APIs are dangerous, and which framework defaults are already safe.
-- **Few false positives.** Every topic lists what does *not* count as a finding (for example `innerHTML` with a constant, a public OpenAPI file or a publishable key). Findings separate *source-proven* from *runtime-reproduced*, and *Confirmed* from *Supported* and *Hypothesis*.
+- **Consistent calibration.** Every topic lists what does *not* count as a finding (for example `innerHTML` with a constant, a public OpenAPI file, a publishable key or a `SameSite=Lax` POST route). Findings separate *source-proven* from *runtime-reproduced*, and *Confirmed* from *Supported* and *Hypothesis*. In the evals so far this is where the skill measurably helps; detection on small fixtures is mostly the model's own (see `evals/README.md`).
+- **Omission checks.** Two mapping-step comparisons find what a sink search cannot: declared security fields (MFA secrets, expiry, lockout, tenant) with no code that enforces them, and sibling handlers on one resource where one drops a control the others apply.
 - **Honest coverage.** A ledger records what was reviewed, not applicable, blocked or not reviewed, so a bounded audit is never presented as proof of security.
 - **Safe by default.** Source review unless runtime testing is explicitly in scope; synthetic data and minimal proofs; audited content is treated as data, never as instructions.
+- **A deterministic first pass.** `scripts/sink_inventory.py` detects the stacks from manifests and prints the entry-point, enforcement, interpreter and outbound-request leads from the stack hint files as one table, so the agent reads leads instead of inventing searches.
 
 ## Install
 
@@ -41,10 +43,11 @@ If an older version of this skill is installed elsewhere (for example uploaded t
 SKILL.md                     Workflow, operating rules and routing table
 references/
   methodology.md             Scope, attack-surface mapping, partial-stack audits, coverage
-  frontend-frameworks.md     Framework escape hatches and SPA-specific checks
+  frontend-frameworks.md     Framework escape hatches, sanitizers, SSR state, Server Actions, CSPT
+  frontend-runtime.md        Bundle secrets, tokens and logout, service workers, third-party scripts
   stacks/                    Per-stack search leads and safe defaults
-  identity-access.md         Authentication, access control, OAuth, JWT
-  browser-security.md        XSS, CSRF, CORS, clickjacking, DOM
+  identity-access.md         Authentication, access control, OAuth, JWT, SAML, credentials and crypto
+  browser-security.md        XSS, CSRF, CORS, clickjacking, server-side open redirects, DOM
   injection.md               SQL, NoSQL, command, XXE, SSTI
   files-data.md              Path traversal, uploads, disclosure, deserialization
   api-realtime.md            REST APIs, WebSockets
@@ -58,12 +61,15 @@ references/
 assets/
   audit-report.md            Report template
   coverage-ledger.md         Coverage ledger template
+scripts/
+  sink_inventory.py          Stack detection and first-pass lead table (python3, no dependencies)
+  test_sink_inventory.py     Its tests (python3 -m unittest discover scripts)
 evals/                       Test prompts and fixtures (see evals/README.md)
 ```
 
 ## Contributing
 
-To add a stack, copy the shape of an existing file in `references/stacks/` and link it from `references/stacks/README.md`. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change.
+To add a stack, copy the shape of an existing file in `references/stacks/` and link it from `references/stacks/README.md`; the `Starting searches` block at the end of each file is what `scripts/sink_inventory.py` runs, so keep the `Category: regex` line shape. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change.
 
 ## License
 

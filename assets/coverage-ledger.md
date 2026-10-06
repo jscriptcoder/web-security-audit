@@ -29,8 +29,8 @@ Rows follow the resource groups in SKILL.md so each block can be completed with 
 | Files and data | Information disclosure | not-reviewed | not-reviewed | |
 | Files and data | Insecure deserialization | not-reviewed | not-reviewed | |
 | APIs and realtime | API testing | not-reviewed | not-reviewed | |
-| GraphQL | GraphQL API vulnerabilities | not-reviewed | not-reviewed | |
 | APIs and realtime | WebSockets | not-reviewed | not-reviewed | |
+| GraphQL | GraphQL API vulnerabilities | not-reviewed | not-reviewed | |
 | Business logic | Business logic vulnerabilities | not-reviewed | not-reviewed | |
 | Business logic | Race conditions | not-reviewed | not-reviewed | |
 | HTTP infrastructure | Server-side request forgery (SSRF) | not-reviewed | not-reviewed | |
@@ -47,7 +47,12 @@ Omitted scope (excluded dimensions such as runtime testing, the other side of a 
 
 | Check | Source status | Runtime status | Evidence/reason |
 | --- | --- | --- | --- |
-| Frontend framework and SPA checks | not-reviewed | not-reviewed | |
+| Declared security fields versus enforcement; sibling handlers compared | not-reviewed | not-reviewed | |
+| Credentials and cryptography (password hashing, token generation, comparisons, encryption) | not-reviewed | not-reviewed | |
+| SAML / enterprise SSO | not-reviewed | not-reviewed | |
+| Server-side open redirects | not-reviewed | not-reviewed | |
+| Frontend framework and SPA rendering checks | not-reviewed | not-reviewed | |
+| Frontend runtime: bundle secrets, tokens and logout, service workers, third-party scripts | not-reviewed | not-reviewed | |
 | Dependencies and shared packages | not-reviewed | not-reviewed | |
 | Browser policy and session cookies | not-reviewed | not-reviewed | |
 | Deployment, secrets and service controls | not-reviewed | not-reviewed | |

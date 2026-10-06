@@ -24,7 +24,7 @@ Many audits cover only one side of the application, for example a frontend repos
 - Client-side open redirects and client-side path traversal ([frontend frameworks](frontend-frameworks.md))
 - Secrets and sensitive data in bundles, source maps and serialized state
 - The OAuth/OIDC client side: PKCE, `state`/nonce handling, redirect handling, token storage, refresh and logout
-- Token exposure to scripts, service-worker caching and logout cleanup
+- Token exposure to scripts, service-worker caching, logout cleanup and bundle secrets ([frontend runtime](frontend-runtime.md))
 - Framing, CSP and other headers when hosting configuration (for example `nginx.conf`, `vercel.json`, `netlify.toml`, `_headers` or CDN config) is in the repository
 - CSRF prerequisites on the client side: credential mode (`credentials: 'include'`, `withCredentials`), custom headers and anti-CSRF token handling
 - Rendering of WebSocket, GraphQL and LLM output; frontend dependencies and third-party scripts
@@ -53,6 +53,16 @@ Infrastructure: proxy/forwarded-header trust, cache rules, CORS policy, outbound
 Trace attacker-controlled sources through transformations to sensitive sinks. Include stored values, database results originating from users, uploaded documents, webhook inputs and third-party API results. Record encodings and parsing at each boundary; a validator before decoding may protect a different representation from the one ultimately consumed.
 
 Build a compact table: surface, entry point, identity, sensitive operation, trust boundary, relevant topic, evidence location. Include background jobs, exports, downloads and realtime handlers when present.
+
+When the skill's `scripts/sink_inventory.py` is available, run it once against the scope to get the stack detection and the entry-point, enforcement, interpreter and outbound-request leads as a table (see [stack hints](stacks/README.md)); then read each lead. The script replaces the first round of `rg` queries, not the reading.
+
+## Compare declared controls with enforced controls
+
+Two cheap comparisons catch the omissions that a sink search misses, because nothing dangerous is written down; something required is simply absent. Do both before leaving the mapping step, and record the result in the surface map.
+
+**Schema versus enforcement.** List every security-relevant field, table or setting the application declares, then find where each one is enforced. Typical declarations: MFA or TOTP secrets, `emailVerified`, `lockedUntil` or failed-attempt counters, `expiresAt` on tokens and invitations, `usedAt` on single-use codes, `role`, `isAdmin`, `tenantId`, `ownerId`, `status` or state columns, `deletedAt`, rate-limit or quota settings, and feature flags that gate privileged behavior. For each, name the code path that reads it on the relevant decision. A declared control with no reader is a finding candidate: a `totpSecret` column while login never verifies a code, an `expiresAt` the reset handler never compares, a `tenantId` no query filters by. Treat a stale or unused column as a hypothesis until the login, lookup or policy path is confirmed not to check it elsewhere.
+
+**Sibling handlers.** Group handlers that act on the same resource (create, read, update, delete, list, export; the REST route, the GraphQL resolver and the Server Action for the same object) and compare the controls each one applies: authentication, ownership or tenant scope in the query, field allowlists, rate limits, CSRF or origin checks. The one that drops a control its siblings apply is the lead; `updateAddress` scoping by `userId` while `deleteAddress` deletes by `id` alone is the pattern. The same comparison across route groups finds the route registered outside the authenticated group or before the middleware.
 
 ## Essential skills
 

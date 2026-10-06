@@ -1,6 +1,6 @@
 # Frontend frameworks and single-page applications
 
-Load with [browser security](browser-security.md) when frontend source, client bundles or SPA hosting configuration is in scope. These checks extend the Academy browser topics with framework and build-specific leads; record findings under the matching Academy topic or the supplemental frontend row of the coverage ledger.
+Load with [browser security](browser-security.md) when frontend source, client bundles or SPA code is in scope. This file covers rendering, navigation, client-built requests and meta-framework server code. Token storage, logout, service workers, bundle secrets, third-party scripts and embedding are in [frontend runtime](frontend-runtime.md); load that file for a full frontend audit, not for a rendering-only diff review. Record findings under the matching Academy topic or the supplemental frontend row of the coverage ledger.
 
 ## Framework escape hatches
 
@@ -26,7 +26,7 @@ Modern frameworks escape text interpolation by default, so most real XSS sits in
 Source: [PortSwigger XSS contexts](https://portswigger.net/web-security/cross-site-scripting/contexts).
 
 - **Inspect:** markdown renderers (`marked` does not sanitize; `markdown-it` with `html: true`; `react-markdown` with `rehype-raw` but no `rehype-sanitize`), rich-text editors and their stored HTML, user SVG, and sanitizer configuration such as DOMPurify `ADD_TAGS`, `ADD_ATTR`, `ALLOW_UNKNOWN_PROTOCOLS`, custom hooks and `SAFE_FOR_TEMPLATES` when a client template engine re-processes output.
-- **Validate:** check the order of operations. Sanitizing and then concatenating, re-parsing, decoding or passing the result through another transform can reintroduce markup (mutation XSS). Confirm user SVG is shown through `<img>` (script-inert) and not inlined, embedded with `<object>`/`<embed>` or served for direct navigation from the app origin.
+- **Validate:** check the order of operations. Sanitizing and then concatenating, re-parsing, decoding or passing the result through another transform can reintroduce markup (mutation XSS). A regex or string replace that runs on sanitizer output and writes captured text into a tag or attribute is the common form. Confirm user SVG is shown through `<img>` (script-inert) and not inlined, embedded with `<object>`/`<embed>` or served for direct navigation from the app origin.
 - **Fix:** sanitize as the final step before insertion, keep the sanitizer current, prefer a restrictive allowlist, and serve user-uploaded active formats from an isolated origin with `Content-Disposition: attachment` where appropriate.
 - **Avoid false positives:** a markdown library with raw HTML disabled and safe link handling is not vulnerable just because it renders HTML.
 
@@ -40,7 +40,7 @@ Source: [PortSwigger XSS contexts](https://portswigger.net/web-security/cross-si
 
 ## Server Actions, route handlers and edge middleware
 
-Meta-frameworks put backend code in the frontend repository. Treat it as backend code and also load [identity and access](identity-access.md).
+Meta-frameworks put backend code in the frontend repository. Treat it as backend code and also load [identity and access](identity-access.md). Apply the sibling-handler comparison from the [methodology](methodology.md#compare-declared-controls-with-enforced-controls) across the actions that touch one resource.
 
 - **Inspect:** Next.js Server Actions (`'use server'`), route handlers, SvelteKit form actions and `+server` endpoints, Nuxt server routes and Remix actions/loaders. Each is a reachable HTTP endpoint independent of whether the UI shows the button.
 - **Validate:** confirm every action and loader authenticates the caller and authorizes the specific object, rather than relying on the page that renders it. Check whether authorization lives only in edge middleware. Middleware-only enforcement is fragile; Next.js [CVE-2025-29927](https://nvd.nist.gov/vuln/detail/CVE-2025-29927) allowed skipping middleware with a forged `x-middleware-subrequest` header in self-hosted deployments before 12.3.5, 13.5.9, 14.2.25 and 15.2.3. Check the installed version and hosting model.
@@ -49,7 +49,7 @@ Meta-frameworks put backend code in the frontend repository. Treat it as backend
 
 ## Client-side navigation and open redirects
 
-Source: [PortSwigger DOM-based open redirection](https://portswigger.net/web-security/dom-based/open-redirection).
+Source: [PortSwigger DOM-based open redirection](https://portswigger.net/web-security/dom-based/open-redirection). Server-emitted redirects are in [browser security](browser-security.md#open-redirects-server-side).
 
 - **Inspect:** `returnUrl`, `next`, `redirect`, `continue` and similar parameters flowing to `location.href`, `location.assign/replace`, `window.open`, router navigation, `<meta http-equiv="refresh">` and post-login/logout redirects, including OAuth callback handling.
 - **Validate:** test absolute (`https://other.example`), protocol-relative (`//other.example`), backslash (`/\other.example`) and `javascript:` values against the actual router. Determine whether the router treats each as in-app or external navigation.
@@ -83,42 +83,6 @@ await fetch(`/api/projects/${encodeURI(project)}/archive`, { method: 'PUT', body
 5. **Ignore SameSite and CSRF tokens.** The request is same-origin and sent by the application, so SameSite cookies, Origin checks and tokens the client attaches all pass.
 6. **Rate it** by the reached route's impact and the interaction needed (opening a link, clicking a button on the page). A link plus one click that removes a team member, deletes an account or changes an email address is a real finding, not a Low encoding nit.
 
-## Client-side secrets and build configuration
-
-- **Inspect:** environment variables inlined at build time: `NEXT_PUBLIC_*`, `VITE_*` (and any custom Vite `envPrefix`), `REACT_APP_*`, `NUXT_PUBLIC_*`/`runtimeConfig.public`, SvelteKit `$env/static/public`, `PUBLIC_*` (Astro), `EXPO_PUBLIC_*`, Angular `environment*.ts`, and webpack `DefinePlugin` passing all of `process.env`. Inspect built bundles and source maps, not just source.
-- **Validate:** classify each value: public identifier (analytics ID, OAuth client ID, publishable key, Firebase config) versus secret (server API keys, signing secrets, private tokens, database URLs). For cloud keys meant to be public, check the restrictions (allowed referrers, API scope, security rules) instead of the key's presence.
-- **Fix:** move secrets to server code or a BFF, rotate exposed ones through the owner's process and keep build-time env injection limited to an explicit public prefix.
-- **Avoid false positives:** a public client identifier is not a secret. A Firebase config in a bundle is expected; the finding is permissive security rules, if present.
-
-## Tokens, sessions and logout in the browser
-
-Sources: [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/), [MDN Clear-Site-Data](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Clear-Site-Data).
-
-- **Inspect:** where access and refresh tokens live (memory, `localStorage`, `sessionStorage`, IndexedDB, cookies), refresh-token rotation, PKCE and `state` handling in the SPA, tokens or OAuth codes in URLs (which leak through history, `Referer` and analytics), and logout cleanup.
-- **Validate:** after logout, check whether tokens, cached API responses, IndexedDB data or service-worker caches remain usable or visible, and whether the server revokes the session or refresh token. Check whether a token is readable by any script, which matters if XSS or a compromised third-party script exists.
-- **Fix:** prefer a BFF or HttpOnly session cookie for sensitive applications; otherwise keep access tokens short-lived in memory and rotate or sender-constrain refresh tokens. Revoke server-side on logout and send `Clear-Site-Data` from the logout response.
-- **Avoid false positives:** `localStorage` token storage is a risk amplifier for XSS, not a vulnerability on its own; rate it by the XSS exposure and token lifetime/scope.
-
-## GraphQL clients
-
-Apollo Client, urql and Relay keep a normalized cache of every object the user has loaded, sometimes persisted to `localStorage`. Check that logout and user switching clear it (`client.clearStore()`), close subscription clients and drop tokens from `connectionParams`. The full checks are in [GraphQL](graphql.md#graphql-clients-in-the-frontend).
-
-## Service workers and client caches
-
-- **Inspect:** service-worker registration scope, the script's origin and update path, and runtime caching rules (Workbox `registerRoute`, `NetworkFirst`, `StaleWhileRevalidate`, `CacheFirst`) that match authenticated API routes or HTML.
-- **Validate:** with synthetic user A, load private data, log out, log in as user B on the same browser profile and check whether A's responses are served from the cache. Check whether the service worker can be registered from a path that serves user-controlled content.
-- **Fix:** exclude authenticated responses from service-worker caches or key them by user, clear caches on logout and send `Cache-Control: no-store` on sensitive responses.
-- **Avoid false positives:** caching public assets and app shell HTML is intended.
-
-## Third-party scripts and supply chain
-
-Source: [MDN Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Subresource_Integrity).
-
-- **Inspect:** scripts loaded from CDNs and third parties, tag managers (who can publish to the container), chat/analytics/A-B testing widgets, `integrity` attributes, and CSP `script-src` allowances for those hosts. The 2024 polyfill.io compromise is an example of a trusted CDN domain serving malicious code after an ownership change.
-- **Validate:** list every origin that can execute script in the app origin and whether it can read tokens, DOM data or form input. Check analytics calls for tokens, emails or other personal data in URLs or payloads.
-- **Fix:** self-host or pin with SRI where the resource is static, restrict CSP to required hosts, govern tag manager publishing rights and scrub sensitive data from telemetry.
-- **Avoid false positives:** missing SRI on a dynamically versioned vendor script (which SRI cannot cover) is a governance observation, not an exploit.
-
 ## Scriptless injection
 
 Source: [PortSwigger Dangling markup injection](https://portswigger.net/web-security/cross-site-scripting/dangling-markup).
@@ -127,14 +91,13 @@ Source: [PortSwigger Dangling markup injection](https://portswigger.net/web-secu
 - **Evidence:** show sensitive page content (a CSRF token, personal data) leaving to an attacker-controlled destination, or a form/base hijack that changes where data is sent.
 - **Fix:** fix the injection rather than relying on CSP; add CSP `base-uri`, `form-action` and restrictive `img-src`/`style-src` as defense in depth.
 
-## Embedding, iframes and microfrontends
+## Starting searches
 
-- **Inspect:** `iframe` `sandbox` values, embedded user content, microfrontend or module-federation remotes loaded from runtime URLs or manifests, `window.open` targets and `postMessage` channels between fragments.
-- **Validate:** `sandbox="allow-scripts allow-same-origin"` on same-origin content lets the framed document remove its own sandbox. Check who controls each remote entry URL or manifest and whether it can be influenced by the user or environment configuration.
-- **Fix:** isolate untrusted embedded content on a separate origin, keep sandbox flags minimal and pin remote entries to trusted, deployment-controlled origins.
-
-## Trusted Types and CSP as frontend fixes
-
-Sources: [MDN Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), [PortSwigger CSP](https://portswigger.net/web-security/cross-site-scripting/content-security-policy).
-
-Recommend CSP `require-trusted-types-for 'script'` with a small set of named policies when an application has many DOM sinks; Trusted Types reached Baseline browser support in 2026, but older browsers ignore it, so treat it as defense in depth. Prefer nonce- or hash-based CSP with `strict-dynamic` over host allowlists. Neither replaces fixing the sink.
+```text
+Browser sinks: dangerouslySetInnerHTML|\.innerHTML|bypassSecurityTrust|v-html|\{@html|unsafeHTML|unsafeSVG|insertAdjacentHTML|document\.write|\.html\(|createContextualFragment|\beval\(|new Function\(
+Rich content: marked\(|marked\.parse|markdown-it|MarkdownIt|rehype-raw|DOMPurify|sanitize\(
+Navigation: location\.(href|assign|replace)|window\.open\(|router\.(push|replace)|redirect\(|returnUrl|returnTo|\bnext\b.*searchParams|searchParams.*\bnext\b
+Client requests: fetch\(`|axios\.(get|post|put|patch|delete)\(|encodeURI\(|credentials: ?['"]include|withCredentials
+Messages and storage: addEventListener\(['"]message|onmessage|postMessage\(|localStorage|sessionStorage|serviceWorker\.register
+Server code in the frontend repo: ['"]use server['"]|['"]server-only['"]|export (async )?function (GET|POST|PUT|PATCH|DELETE)|\+server\.|defineEventHandler|export const (action|loader)
+```

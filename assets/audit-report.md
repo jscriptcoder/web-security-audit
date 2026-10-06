@@ -15,6 +15,8 @@
 
 ## Findings
 
+[Required for every finding: severity and rationale, confidence and evidence type, affected surface, attacker prerequisites, evidence or source trace, impact and limits, remediation, regression check. For Low and Informational items, the expected/observed and reproduction lines may be folded into the evidence line; do not pad them.]
+
 ### WSA-001 — [concrete problem]
 
 - Severity and rationale: [value]

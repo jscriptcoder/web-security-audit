@@ -44,6 +44,17 @@ Source: [PortSwigger Clickjacking](https://portswigger.net/web-security/clickjac
 - **Example:** An account-deletion page with a single Confirm button and no `frame-ancestors` policy is framed invisibly over an attacker's "Play" button. `Content-Security-Policy: frame-ancestors 'self'` prevents it.
 - **Avoid false positives:** missing X-Frame-Options is not a bypass if an enforced applicable `frame-ancestors` policy blocks framing. Frame-busting JavaScript is insufficient by itself. Mere frameability of public content may have no material impact; a CSP meta tag cannot supply framing protection.
 
+## Open redirects (server-side)
+
+Source: [OWASP Unvalidated Redirects and Forwards](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html). Client-side redirects are in [frontend frameworks](frontend-frameworks.md#client-side-navigation-and-open-redirects).
+
+- **Inspect:** server responses that redirect to a request-controlled destination: `next`, `returnUrl`, `redirect`, `continue`, `url`, `goto` and `Referer`-based returns on login, logout, OAuth callbacks, language or locale switches, link trackers and legacy URL shims. Include framework helpers (`redirect()`, `NextResponse.redirect`, `RedirectView`, `redirect_to`, `Redirect(`) and `Location` headers built by hand.
+- **Validate:** resolve the value the way the framework does, not by eye. Test an absolute URL, a protocol-relative value (`//evil.example`), a backslash variant (`/\evil.example`, which browsers normalize to `//`), a scheme-only prefix (`https:evil.example`), an `@` userinfo trick (`https://app.example@evil.example`) and `javascript:` against the actual check. A `startsWith('/')` check passes `//evil.example`; a `startsWith('https://app.example')` check passes `https://app.example.evil.net`; a check on the unparsed string misses what `new URL(value, base)` or the framework's redirect helper will do with it.
+- **Evidence:** show the server emitting a `Location` to an attacker origin from a request a victim can be made to issue. Note any chained effect: an OAuth `code` or token in the redirected URL, a credential-bearing `Referer`, or a login page that returns the user to the attacker after authentication (phishing with a genuine first hop).
+- **Fix:** accept only a path, parse it with the framework's URL parser against the application origin and require `origin === expected`; or map an identifier to an allowlist of routes. Reject backslashes and control characters before parsing. For cross-origin returns that are a product requirement, keep an explicit registered-destination allowlist.
+- **Example:** `safeNext = next.startsWith('/') ? next : '/account'` followed by `NextResponse.redirect(new URL(next, request.url))` sends `//evil.example/` off-site because the URL parser treats it as protocol-relative. Rails `redirect_to params[:back]` raises in Rails 7 with `raise_on_open_redirects` unless `allow_other_host: true` is passed.
+- **Avoid false positives:** a redirect to a same-origin path, a fixed route table or a parsed-and-compared origin is intended behavior. A standalone open redirect with no credential or token in the chain is usually Low; raise it when it feeds an OAuth flow, a login page or a token-bearing URL.
+
 ## DOM-based vulnerabilities
 
 Source: [PortSwigger DOM-based vulnerabilities](https://portswigger.net/web-security/dom-based).

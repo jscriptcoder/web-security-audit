@@ -11,6 +11,21 @@ Source: [PortSwigger Authentication](https://portswigger.net/web-security/authen
 - **Example:** After the password step the login response already sets a session cookie accepted by `/api/*`, so MFA only gates the UI. `POST /mfa/verify` takes `userId` from the body and checks that user's code. A reset token derived from `md5(email + timestamp)` is predictable; a token that still works after use or after a newer token is issued is replayable.
 - **Avoid false positives:** a public login screen is expected. Client validation is not the enforcement boundary; centralized middleware may already enforce the missing-looking local check. An enumeration difference needs a repeatable signal and contextual impact.
 
+Apply the schema-versus-enforcement comparison from the [methodology](methodology.md#compare-declared-controls-with-enforced-controls) here first: every MFA, verification, lockout, expiry and single-use field the data model declares needs a reader on the login, recovery or token path.
+
+For passkeys and WebAuthn, check that the server generates and stores the challenge per ceremony and consumes it once, verifies the origin and RP ID against configuration rather than the request, checks the user-presence/verification flags the policy requires, binds the credential to the account that started the ceremony, and treats a signature counter that does not increase as a cloned-authenticator signal. Use a maintained library; home-grown attestation parsing is a lead.
+
+## Credentials and cryptography
+
+Sources: [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [OWASP Cryptographic Storage](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html).
+
+- **Inspect:** password hashing (algorithm, work factor, salt, pepper handling), comparison of secrets and tokens, generation of tokens, codes, invitation links and API keys, encryption of stored sensitive fields (mode, IV/nonce handling, authentication), and where keys and secrets live (source, config, environment, a manager).
+- **Validate:** confirm the hash is a password hash (Argon2id, scrypt, bcrypt, PBKDF2 with a current cost), not a fast digest (`md5`, `sha1`, `sha256`, with or without a salt). Confirm secrets are compared in constant time where an attacker can measure (`hmac.compare_digest`, `crypto.timingSafeEqual`, `MessageDigest.isEqual`, `hash_equals`, `subtle.ConstantTimeCompare`). Confirm random values come from a CSPRNG (`secrets`, `crypto.randomBytes`/`randomUUID`, `SecureRandom`, `RandomNumberGenerator`, `crypto/rand`, `random_bytes`, `SecureRandom`) rather than `Math.random`, `random.random`, `java.util.Random`, `rand()` or a timestamp. For encryption, check for ECB, a static or reused IV/nonce with CTR/GCM, unauthenticated CBC where the ciphertext is attacker-supplied (padding oracle), and keys derived directly from a password without a KDF.
+- **Evidence:** name the algorithm and parameters from code or configuration, the data they protect and the attacker who can obtain the hash, ciphertext or timing signal. Report an exposed secret by type and location; never print its value.
+- **Fix:** adopt a password hash with current parameters and a migration on next login; use constant-time comparison for secrets; generate tokens with 128 bits or more of CSPRNG entropy and store a hash of long-lived ones; use an AEAD (AES-GCM, ChaCha20-Poly1305) with a unique nonce per message; keep keys in a secret manager with rotation.
+- **Example:** `users.password = sha256(salt + password)` lets anyone with a database dump test billions of guesses per second. `if (token == stored)` on a reset token is a timing side channel only when the attacker can measure the comparison; over a network with a 256-bit token it is usually hardening. `Math.random().toString(36)` for an invitation token is predictable from a few observed values.
+- **Avoid false positives:** a fast digest is fine for integrity of non-secret data (ETags, cache keys, deduplication). `==` on an unpredictable 256-bit token is Low or Informational unless a measurable timing channel exists. A per-user salt does not rescue a fast hash. Do not call a configuration insecure from the algorithm name alone when a library applies safe parameters by default (bcrypt cost 10 to 12, Argon2id library defaults).
+
 ## Access control
 
 Source: [PortSwigger Access control](https://portswigger.net/web-security/access-control).
@@ -34,6 +49,17 @@ Source: [PortSwigger OAuth authentication](https://portswigger.net/web-security/
 - **Avoid false positives:** missing `state` alone does not prove CSRF when a correctly bound alternative protection exists. Inspect the complete flow and provider configuration.
 
 Apply [RFC 9700](https://datatracker.ietf.org/doc/html/rfc9700) when recommending flow changes: favor authorization code with PKCE, exact registered redirect matching subject to the native-loopback exception, and appropriate replay/refresh-token protection. Evaluate PKCE, state and OIDC nonce according to their distinct roles and the implemented flow; do not treat them as interchangeable switches. Prefer stable issuer/subject identity over unverified email matching.
+
+## SAML and enterprise SSO
+
+Source: [OWASP SAML Security](https://cheatsheetseries.owasp.org/cheatsheets/SAML_Security_Cheat_Sheet.html).
+
+- **Inspect:** the service-provider library and version, signature validation settings (which element must be signed: the `Response`, the `Assertion` or both), the trusted IdP certificate source and rotation, `Audience`, `Recipient`, `Destination`, `NotBefore`/`NotOnOrAfter` and `InResponseTo` checks, assertion replay tracking, the attribute used to map the local account (NameID, email, employee ID), just-in-time provisioning and role/group mapping from attributes, single-logout handling, and the IdP-initiated flow if enabled.
+- **Validate:** confirm the library rejects an unsigned assertion inside a signed response and an assertion whose signature references a different element (XML signature wrapping); confirm the signing certificate is pinned to the configured IdP rather than taken from the message; confirm the audience is this SP and the assertion ID has not been seen. Check whether a multi-tenant SP binds the IdP to the tenant, so IdP A cannot assert a user of tenant B. Parse the assertion with the same hardened XML settings as any other XML input ([XXE](injection.md#xxe-injection)).
+- **Evidence:** show a modified or re-signed assertion accepted, an assertion from one tenant's IdP mapped into another tenant, or a role elevated through an attacker-controlled attribute. State which party (IdP admin, any IdP user, unauthenticated) can supply the input.
+- **Fix:** require signatures on the assertion with the library's strict validation, pin IdP certificates per tenant, validate audience, recipient and time window, store assertion IDs for the validity window, map accounts by a stable immutable identifier and derive roles from local policy rather than trusting attributes for privileged roles.
+- **Example:** The SP validates the signature on `Response` but reads the user from an `Assertion` the attacker inserted before the signed one. A multi-tenant SP looks up the IdP by the `Issuer` in the message, so a tenant that controls its own IdP can issue an assertion with another tenant's email and log in there.
+- **Avoid false positives:** metadata URLs, entity IDs and an unencrypted assertion over TLS are normal. A library with current defaults (`wantAssertionsSigned`, strict mode) is likely safe; the leads are explicit downgrades, custom XML handling and the account-mapping and tenant-binding logic around the library.
 
 ## JWT attacks
 

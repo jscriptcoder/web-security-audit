@@ -36,7 +36,9 @@ Do not inherit the Academy topic's possible maximum impact or a scanner's severi
 
 ## Write actionable findings
 
-Use stable identifiers, such as `WSA-001`. Each finding needs title, severity/rationale, confidence, affected surface, evidence type, attacker prerequisites, reproduction or source trace, observed/expected behavior, bounded impact, remediation and a regression check. Add a relevant Academy/primary source link. Include CWE only when the mapping is clear; do not invent identifiers.
+Use stable identifiers, such as `WSA-001`. Each finding needs title, severity/rationale, confidence, affected surface, evidence type, attacker prerequisites, reproduction or source trace, observed/expected behavior, bounded impact, remediation and a regression check. Add a relevant Academy/primary source link. Include CWE only when the mapping is clear; do not invent identifiers. Scale the detail to the severity: a Low or Informational item gets the required lines and one evidence pointer, not a twelve-line template filled with restatements.
+
+A report with no confirmed findings is a legitimate outcome. Do not promote a hardening observation or a hypothesis to a finding to avoid an empty section; say what was checked and found sound, name the traps that looked dangerous and why they are safe, and keep the confirmed count at zero.
 
 Point to exact source files and lines or sanitized request/response excerpts. Include revision and environment. Redact cookies, credentials, tokens, private keys and personal data; retain enough structure to reproduce with synthetic values. Do not put real secrets into URLs, browser tools, external scanners or reports. If a secret is found, record its type/location and recommend rotation without printing its value.
 
