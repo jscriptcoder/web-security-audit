@@ -48,4 +48,4 @@ Recommend fixes at the enforcement boundary: server authorization, parameter bin
 
 Use the report asset linked from SKILL.md for a full report. Adapt detail to the request; for a small diff review, a concise finding list and coverage statement may suffice. Lead with the meaningful findings, then the evidence, fixes, coverage and limitations. Include a prioritized next-action list and unresolved hypotheses without inflating confirmed counts.
 
-When no issues are found, say which surfaces, roles and checks were reviewed and which remain blocked. Do not claim the application is secure or certify compliance from a limited audit. If remediation was requested, report the changes and targeted regression results separately from the original finding.
+When no issues are found, say which surfaces, roles and checks were reviewed, which remain blocked or not reviewed, and what scope was excluded. Do not claim the application is secure or certify compliance from a limited audit. If remediation was requested, report the changes and targeted regression results separately from the original finding.

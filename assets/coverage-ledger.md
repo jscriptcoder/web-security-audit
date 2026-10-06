@@ -2,7 +2,9 @@
 
 Scope/revision/environment: [value]
 States: `reviewed`, `not-applicable`, `blocked`, `not-reviewed`.
-Keep rows at `not-reviewed` until triaged. In Evidence/reason, name the inspected surface and check, the absence establishing non-applicability, or the blocker. A reviewed row records a bounded check, not a guarantee. For a partial-stack or focused review, keep only the rows in scope and name the omitted scope once below the table instead of marking those rows `blocked`.
+Keep rows at `not-reviewed` until triaged. In Evidence/reason, name the inspected surface and check, the absence establishing non-applicability, or the blocker. A reviewed row records a bounded check, not a guarantee.
+
+Anything the requested scope excludes gets no state. Delete a status column the mode excludes (for example the Runtime status column in a source-only review) and say so once in the omitted-scope line. For a partial-stack or focused review, keep only the rows in scope. `blocked` means in scope but prevented; `not-reviewed` means in scope but not yet done. See the methodology for the full rule.
 
 Rows follow the resource groups in SKILL.md so each block can be completed with one reference loaded. Essential skills is methodology, not a vulnerability class, so it has no row.
 
@@ -39,7 +41,7 @@ Rows follow the resource groups in SKILL.md so each block can be completed with 
 | Prototype pollution | Prototype pollution | not-reviewed | not-reviewed | |
 | LLM integrations | Web LLM attacks | not-reviewed | not-reviewed | |
 
-Omitted scope (partial-stack or focused reviews): [value]
+Omitted scope (excluded dimensions such as runtime testing, the other side of a partial-stack review, or surfaces outside a focused review): [value]
 
 ## Supplemental platform checks
 

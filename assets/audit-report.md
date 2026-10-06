@@ -32,7 +32,7 @@
 
 ## Coverage
 
-[Insert or link the coverage ledger. Keep source/runtime coverage distinct. Explain not-applicable, blocked and not-reviewed rows.]
+[Insert or link the coverage ledger. Keep source/runtime coverage distinct when both are in scope; drop a column the requested mode excluded and say so once. Explain not-applicable, blocked and not-reviewed rows.]
 
 ## Hypotheses and hardening observations
 

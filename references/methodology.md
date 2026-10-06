@@ -79,9 +79,15 @@ For a full audit, use the coverage asset linked from SKILL.md. Use these exact s
 
 - `reviewed`: perform the stated check and record evidence; this does not mean universally secure.
 - `not-applicable`: identify why the relevant feature is absent within the inspected scope.
-- `blocked`: identify an applicable check prevented by missing evidence/access or a runtime constraint.
-- `not-reviewed`: identify remaining applicable or untriaged work.
+- `blocked`: the check is within the requested scope, but something outside your control prevented it: missing credentials or test identities, an unreachable environment when runtime testing was requested, a referenced file that was not supplied (for example proxy or CDN configuration), or unavailable tooling. Name the blocker.
+- `not-reviewed`: the check is within scope and could be done, but has not been done yet (untriaged, deprioritized or out of time).
 
-Never convert lack of credentials, tooling or deployment visibility into `not-applicable`. Track source and runtime coverage separately in each row. For a focused or partial-stack review, track only the requested surfaces and name the omitted scope once; `blocked` is for applicable checks within scope that could not be completed.
+Decide between these by asking one question: did the requested scope include this check?
+
+- **No:** it is omitted scope. It gets no state at all. Name it once below the ledger. When the mode excludes a whole dimension, delete that status column and state it once, for example "Runtime testing: excluded by the requested source-only review". Do not fill the column with `blocked` or `not-reviewed`. The same applies to a runtime-only review and the source column, and to the other side of a partial-stack review.
+- **Yes, but it could not be done:** `blocked`, with the blocker.
+- **Yes, and it simply has not been done:** `not-reviewed`.
+
+Never convert lack of credentials, tooling or deployment visibility into `not-applicable`. Track source and runtime coverage separately in each row when both are in scope. For a focused or partial-stack review, track only the requested surfaces.
 
 For long audits, maintain a compact checkpoint in the host's normal artifact location: scope/revision, surface map, loaded resources, completed checks, evidence pointers, current hypotheses, next actions and blockers. Reopen the relevant resource when resuming; avoid copying entire references or raw traffic into the checkpoint. Reconcile findings against the current revision before finalizing.

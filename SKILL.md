@@ -59,7 +59,7 @@ Load an additional group only when evidence exposes its boundary. Examples: Grap
 - Do not report visible GraphQL queries, public API documentation, introspection, source maps or client identifiers as vulnerabilities without sensitive exposure or an exploitable boundary violation.
 - Do not conclude authorization is missing from UI behavior or a local handler alone; inspect server middleware, service policy and datastore controls. A 200 response is not proof of unauthorized data/action.
 - Do not infer browser exploitation from arbitrary headers a proxy can forge. Evaluate real credential, origin, preflight, framing and cookie behavior.
-- Keep severity and confidence independent. Do not claim remote code execution, account takeover or cross-tenant access without the required path. Record absent runtime access as `blocked`, not a clean result.
+- Keep severity and confidence independent. Do not claim remote code execution, account takeover or cross-tenant access without the required path. When runtime testing is in scope but access is missing, record `blocked`, not a clean result. When the user excluded runtime testing, it is omitted scope: drop the runtime column and say so once rather than marking rows `blocked`.
 - State bounded results when no issue is found; never equate a finite audit with universal security.
 
 ## Source use
