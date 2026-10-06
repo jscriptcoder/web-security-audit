@@ -89,6 +89,33 @@
         "Reports that the Apollo cache persisted to localStorage is not cleared on logout, linked to shared kiosk use",
         "Does not report GraphQL queries in the web client bundle as a vulnerability"
       ]
+    },
+    {
+      "id": 5,
+      "name": "next-store-hard-audit",
+      "prompt": "Security review of our Next.js storefront in evals/fixtures/next-store before release (App Router, React 19, Prisma, opaque session cookie). Source review only. Write the report to a markdown file.",
+      "expected_output": "A Next.js App Router audit that finds the subtle planted bugs (server secret inlined into the client bundle and an internal API called from the browser, client-side path traversal in the receipt resend that reaches the account-delete route, an unscoped deleteAddress server action, a sanitizer output mutated after DOMPurify, and an open redirect via startsWith('/')), while leaving the deliberate look-alikes alone (SameSite=Lax POST routes, the escaped JSON-LD script, the React 19 website href, presence-only middleware on a patched Next version, the public Sentry DSN).",
+      "files": [
+        "evals/fixtures/next-store/"
+      ],
+      "expectations": [
+        "Reports that next.config.js `env` inlines INVENTORY_API_TOKEN into the client JavaScript bundle (a server secret, not a NEXT_PUBLIC_ value), and recommends removing it and rotating the token",
+        "Reports that StockBadge is a Client Component ('use client') that imports lib/inventory.ts and calls the internal inventory API with the bearer token from the browser, and notes lib/inventory.ts lacks the 'server-only' guard that session.ts and mail.ts use",
+        "Reports client-side path traversal in ResendReceipt: `encodeURI(order)` does not encode `/` `?` or `#`, so the order search param reaches a different endpoint",
+        "Shows the traversal chains to the state-changing POST /api/account/delete (for example order=`../account/delete?`), and recommends encodeURIComponent plus an id-format check",
+        "Reports that the deleteAddress server action calls db.address.delete({ where: { id } }) without the userId scope that the sibling updateAddress applies, allowing deletion of any user's address (IDOR)",
+        "Reports that PostBody reintroduces markup after sanitization: linkMentions runs a regex over the DOMPurify output and injects the captured handle into an href, so the post-sanitize transform can reintroduce an injection",
+        "Reports the open redirect in the login route: safeNext only checks next.startsWith('/'), which accepts protocol-relative `//evil.example` (and `/\\evil.example`) that NextResponse.redirect sends off-site",
+        "Reports that the service worker (public/sw.js) caches authenticated /api GET responses (for example /api/me) in a shared cache that is not cleared on logout, exposing one user's data to the next on the shared family computers the README describes",
+        "Does not report the POST route handlers (/api/account/delete, /api/orders/[id]/receipt) as cross-site CSRF, given the SameSite=Lax session cookie; the real delete path is the same-origin CSPT chain",
+        "Does not report the product page JSON-LD dangerouslySetInnerHTML as XSS, because `<` is escaped to < before injection",
+        "Does not report the /u/[handle] website href as a javascript: XSS or tabnabbing issue, given React 19 blocks javascript: URLs and rel includes noopener",
+        "Does not report the presence-only middleware as an auth bypass, recognizing that requireSession() in the pages and actions is the real enforcement and Next 15.3.3 is past the CVE-2025-29927 fix",
+        "Does not report the NEXT_PUBLIC_SENTRY_DSN as a secret exposure",
+        "Does not report user enumeration on the login route, which compares against a dummy bcrypt hash when the user is absent",
+        "Reports that app/account/page.tsx loads the full User row (no Prisma select) and passes it to the 'use client' ProfileForm, serializing passwordHash and totpSecret into the client payload",
+        "Reports that login (app/api/login/route.ts) never verifies TOTP even though User.totpSecret and a 2FA indicator exist"
+      ]
     }
   ]
 }
