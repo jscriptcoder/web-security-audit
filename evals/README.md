@@ -20,25 +20,27 @@ Without tooling: give each prompt to an agent with the skill installed, save the
 
 ## Results so far
 
-Each eval was run with the skill and without it (same model, same prompt), and the reports were graded against `evals.json`. Executor models: Claude Opus 5.5 for the first four evals, Claude Opus 4.8 for `next-store-hard-audit`. Treat these as small samples, not benchmarks.
+Each eval was run with the skill and without it (same model, same prompt), and the reports were graded against `evals.json`. Treat these as small samples, not benchmarks.
 
-| Eval | With skill | Without skill | Runs |
-| --- | --- | --- | --- |
-| `frontend-only-react-audit` | 14/14 | 13/14 | 1 |
-| `spring-kotlin-backend-audit` | 12/12 | 11/12 | 1 |
-| `react-pr-diff-review` | 6/6 | 6/6 | 1 |
-| `graphql-monorepo-audit` | 12/12 | 12/12 | 1 |
-| `next-store-hard-audit` | 16/16, 13/16 | 13/16, 13/16 | 2 |
+| Eval | Model | With skill | Without skill | Runs per config |
+| --- | --- | --- | --- | --- |
+| `frontend-only-react-audit` | Opus 5.5 | 14/14 | 13/14 | 1 |
+| `spring-kotlin-backend-audit` | Opus 5.5 | 12/12 | 11/12 | 1 |
+| `react-pr-diff-review` | Opus 5.5 | 6/6 | 6/6 | 1 |
+| `graphql-monorepo-audit` | Opus 5.5 | 12/12 | 12/12 | 1 |
+| `next-store-hard-audit` | Opus 4.8 | 16/16, 13/16 | 13/16, 13/16 | 2 |
+| `next-store-hard-audit` | Opus 5.5 | 16, 16, 16 (current skill); 15, 16 (previous skill) | 15/16, 15/16 | 2–3 |
 
 What the runs show:
 
 - **The first four fixtures do not test detection.** The model found every planted bug with or without the skill. The differences were in calibration and reporting: confidence labels, severities held back where evidence was missing, backend suspicions kept as handoffs, a regression check per finding.
-- **On the harder fixture, the reproducible gain is calibration on look-alikes.** With the skill, both runs dismissed the React 19 `javascript:` href and the SameSite=Lax POST routes correctly. Without it, both runs rated the href as XSS, and one run reported the Lax routes as CSRF.
-- **The hardest true positive is not reliably found, with or without the skill.** The client-side path traversal that reaches `POST /api/account/delete` was caught in 1 of 4 runs (a with-skill run). The other runs, including the second with-skill run, judged the page safe because the intended route checks ownership.
-- **Some misses are noise.** The 2FA-not-enforced finding was reported in the first run of each configuration and missed in the second.
-- **Cost:** the skill used about 1.5× the tokens and 1.8× the wall time on the harder fixture.
+- **The reproducible gain on the harder fixture is calibration on look-alikes.** Across both models, every with-skill run treated the SameSite=Lax POST routes as protected; most no-skill runs reported them as a Medium CSRF finding. On Opus 4.8 the skill also stopped the React 19 `javascript:` href from being rated as XSS.
+- **Detection of the client-side path traversal chain depends on the model.** On Opus 4.8 it was found in 1 of 4 runs. On Opus 5.5 it was found in all 7 runs, including both runs without the skill. The worked trace added to the skill afterwards therefore cannot be credited with the improvement; on Opus 5.5 it only shows no regression (3 of 3).
+- **Some misses are noise.** The 2FA-not-enforced finding was missed in about one run in three, in every configuration.
+- **Unplanted finding:** the fixture pins `next` 15.3.3 / `react` 19.1.0, which fall in the December 2025 React Server Components RCE advisory range. Most Opus 5.5 runs reported it. It is not graded because it depends on the review date.
+- **Cost:** the skill used about 1.5× the tokens and 1.5–1.8× the wall time on the harder fixture.
 
-The open improvement is the client-side path traversal guidance: a worked trace that resolves the final normalized path and checks which endpoint it reaches, followed by a re-run of `next-store-hard-audit` to see whether that expectation becomes reliable.
+Open work: a client-side path traversal fixture that the worked trace was not written against, and that the current model misses without the skill, to measure whether the trace helps.
 
 ## Broader testing
 

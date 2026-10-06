@@ -61,11 +61,27 @@ Source: [PortSwigger DOM-based open redirection](https://portswigger.net/web-sec
 
 Source: [Doyensec CSPT2CSRF research](https://blog.doyensec.com/2024/07/02/cspt2csrf.html).
 
-- **Inspect:** user-controlled values interpolated into API paths, such as ``fetch(`/api/orders/${params.id}`)`` or `axios.get('/api/files/' + name)`, where the frontend attaches credentials, an `Authorization` header or a CSRF token.
-- **Validate:** check whether a value like `../../admin/users/123/delete?` or its encoded variants reaches the request path unencoded, so the browser normalizes it into a different endpoint. Note which HTTP method and body the sink sends; a POST/PUT/DELETE sink is a CSRF primitive even with SameSite cookies and anti-CSRF tokens, because the app itself sends the request.
+- **Inspect:** user-controlled values interpolated into API paths, such as ``fetch(`/api/orders/${params.id}`)`` or `axios.get('/api/files/' + name)`, where the frontend attaches credentials, an `Authorization` header or a CSRF token. Sources include route params, search params, the hash, storage and data returned by other users.
+- **Validate:** follow the trace below for every such sink. Do not stop at the endpoint the code intends to call: that endpoint's own authorization says nothing about the endpoint the request can be redirected to.
 - **Evidence:** show the request reaching an unintended endpoint with the victim's credentials and the resulting effect or response handling, such as attacker-chosen JSON rendered unsafely.
 - **Fix:** apply `encodeURIComponent` to every path segment and validate identifier format (for example UUID or numeric) before building the URL.
-- **Avoid false positives:** a traversal that only reaches GET endpoints returning the user's own data has little impact; record it as hardening unless a chain is evidenced.
+- **Avoid false positives:** the sink is safe when every interpolated segment goes through `encodeURIComponent` or a strict format check before the URL is built. A traversal that only reaches GET endpoints returning the user's own data has little impact; record it as hardening unless a chain is evidenced.
+
+### Worked trace
+
+Take this component, reached at `/projects/archive?project=<value>`:
+
+```tsx
+const project = useSearchParams().get('project') ?? '';
+await fetch(`/api/projects/${encodeURI(project)}/archive`, { method: 'PUT', body: JSON.stringify({ reason }) });
+```
+
+1. **Encoding.** `encodeURI` leaves `/`, `?`, `#` and `.` unencoded, so it does not confine the value to one path segment. Treat no encoding, string concatenation and `encodeURI` the same way. React Router and Next.js decode route params, so `%2F` in a route param also arrives as `/`.
+2. **Resolve the final URL.** Pick a value with dot segments and a `?` or `#` that cuts off the fixed suffix, and resolve it the way the browser does: `new URL(path, origin)`. With `project=../team/members/7/remove?`, the path `/api/projects/../team/members/7/remove?/archive` resolves to `/api/team/members/7/remove` with the query `?/archive`. Check the arithmetic: each `..` removes one segment, and the `?` moves the suffix out of the path.
+3. **List what the request can reach.** Collect the same-origin routes that accept this method (here `PUT`) and authenticate with credentials the browser or the app attaches automatically: cookies, or an `Authorization` header added by the API client. Rank them by impact: deletion, ownership or membership changes, email or password changes, payments.
+4. **Ignore the intended route's checks.** An ownership check in `/api/projects/[id]/archive` does not protect `/api/team/...`. What matters is whether the reached route accepts an authenticated request with this method and an empty or attacker-shaped body.
+5. **Ignore SameSite and CSRF tokens.** The request is same-origin and sent by the application, so SameSite cookies, Origin checks and tokens the client attaches all pass.
+6. **Rate it** by the reached route's impact and the interaction needed (opening a link, clicking a button on the page). A link plus one click that removes a team member, deletes an account or changes an email address is a real finding, not a Low encoding nit.
 
 ## Client-side secrets and build configuration
 
