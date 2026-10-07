@@ -2,7 +2,7 @@
 
 An agent skill for evidence-based security audits of web applications, frontend and backend. It walks an AI coding agent through the [PortSwigger Web Security Academy](https://portswigger.net/web-security/all-topics) topics, adds framework- and stack-specific checks, and produces findings with explicit confidence, severity, remediation, regression checks and a coverage record.
 
-Works with Claude Code and other agents that load `SKILL.md` skills. `agents/openai.yaml` adds metadata for OpenAI Codex.
+Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that loads `SKILL.md` skills. `agents/openai.yaml` adds display metadata for OpenAI Codex.
 
 > Not affiliated with or endorsed by PortSwigger. The Academy is used as a coverage map; the checks are original audit procedures, not copied lab content.
 
@@ -18,16 +18,28 @@ Works with Claude Code and other agents that load `SKILL.md` skills. `agents/ope
 
 ## Install
 
-Copy this folder into a skills directory:
+Copy this folder into a skills directory so that `SKILL.md` ends up at `<skills dir>/web-security-audit/SKILL.md`. The folder name must stay `web-security-audit` to match the `name` in the frontmatter.
 
-| Agent | Location |
-| --- | --- |
-| Claude Code, personal | `~/.claude/skills/web-security-audit/` |
-| Claude Code, one project | `<repo>/.claude/skills/web-security-audit/` |
-| Claude.ai | Upload the folder as a zip in the Skills settings |
-| Codex | Follow your Codex skills setup; `agents/openai.yaml` supplies the display metadata |
+**Shortest path for a shared repository.** Commit the folder as `<repo>/.agents/skills/web-security-audit/`. Codex, Cursor, Devin and Devin CLI all read that directory. Add `<repo>/.claude/skills/web-security-audit/` as well (a copy or a symlink) for Claude Code.
 
-If an older version of this skill is installed elsewhere (for example uploaded to Claude.ai), remove or replace it so the two do not compete.
+| Agent | Project-level location | User-level location |
+| --- | --- | --- |
+| Claude Code | `<repo>/.claude/skills/` | `~/.claude/skills/` |
+| Claude.ai | Upload the folder as a zip in the Skills settings | |
+| Codex (CLI, IDE, ChatGPT desktop) | `<repo>/.agents/skills/` | `~/.agents/skills/`; admins can use `/etc/codex/skills/` |
+| Cursor | `<repo>/.cursor/skills/` or `<repo>/.agents/skills/`; also reads `.claude/skills/` and `.codex/skills/` | `~/.cursor/skills/` or `~/.agents/skills/`; only `~/.cursor/skills/` syncs to Cloud Agents |
+| Devin (cloud) | `<repo>/.agents/skills/` (recommended); also reads `.claude/skills/`, `.devin/skills/`, `.github/skills/`, `.cognition/skills/` and `.windsurf/skills/` | Not applicable; Devin indexes skills from every connected repository |
+| Devin CLI | `<repo>/.agents/skills/`, `.devin/skills/` or `.windsurf/skills/` | `~/.agents/skills/` or `~/.config/devin/skills/`; `%APPDATA%\devin\skills\` on Windows |
+
+Notes:
+
+- **Devin** picks the skill up from any connected repository that contains it, so one committed copy makes it available to every Devin session in the organization. Cloned repos are rescanned during a session, and the on-disk copy overrides the indexed one.
+- **Codex** reads only `name` and `description` from the frontmatter to decide when to trigger; `agents/openai.yaml` customises the display and invocation behaviour and is optional. Codex detects new skills automatically; restart it if an update does not appear.
+- **Cursor** walks the skills root recursively, so the folder may sit in a subdirectory such as `.cursor/skills/security/web-security-audit/`.
+
+If an older version of this skill is installed elsewhere (for example uploaded to Claude.ai, or both in `.claude/skills/` and `.agents/skills/` for an agent that reads both), remove or replace it so the two do not compete.
+
+Sources: [Claude Code skills](https://code.claude.com/docs/en/skills), [Codex skills](https://learn.chatgpt.com/docs/build-skills), [Cursor Agent Skills](https://cursor.com/docs/skills), [Devin skills](https://docs.devin.ai/product-guides/skills), [Devin CLI skills](https://docs.devin.ai/cli/extensibility/skills/overview).
 
 ## Example requests
 
