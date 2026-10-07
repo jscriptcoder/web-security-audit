@@ -16,6 +16,6 @@ Frontend framework escape hatches live in [frontend-frameworks.md](../frontend-f
 
 Use these as leads for `rg`; adapt the patterns to the codebase. A match is a place to read, not a finding. Version-dependent defaults are called out; confirm the resolved version from the lockfile or build file before relying on them.
 
-`scripts/sink_inventory.py <path>` (Python 3, no dependencies) detects the stacks from manifests, runs every `Starting searches` line of the matching files and prints one table of `category | file:line | excerpt`, grouped by category. Use `--json` for machine-readable output and `--stack <name>` to force a stack. Run it once at the mapping step, then read each lead; it does not judge anything.
+`scripts/sink_inventory.py <path>` (Python 3, no dependencies) detects the stacks from manifests, runs every `Starting searches` line of the matching files and prints one table of `category | file:line | excerpt`, grouped by category. It also names the directories it did not read (dependencies, build output, installed copies of this skill); open any whose name hides real source, such as a hand-written `bin/` or `vendor/`. Use `--json` for machine-readable output and `--stack <name>` to force a stack. Run it once at the mapping step, then read each lead; it does not judge anything.
 
 To add a stack, copy the shape of an existing file: entry points and enforcement, a topic table of leads, safe defaults, and a `Starting searches` fenced block whose lines are `Category: regex` (the script runs those lines).

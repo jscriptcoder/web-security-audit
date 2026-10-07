@@ -169,6 +169,7 @@ class Cli(unittest.TestCase):
             write(root, "main.go", 'package main\nfunc h() { exec.Command("sh", "-c", c) }\n')
             data = json.loads(self.run_cli(str(root), "--json"))
             self.assertEqual(data["stacks"], ["go"])
+            self.assertEqual(data["searched_stacks"], ["go"])
             paths = {(lead["path"], lead["line"]) for lead in data["leads"]}
             self.assertIn(("main.go", 2), paths)
 
@@ -182,6 +183,15 @@ class Cli(unittest.TestCase):
             self.assertIn("## ruby: Interpreters", text)
             self.assertIn("| app/x.rb:1 |", text)
 
+    def test_markdown_excerpts_containing_backticks_stay_inside_one_code_span(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "Gemfile", "")
+            write(root, "app/x.rb", "Marshal.load(`cat x`)\nMarshal.load(data) # ``` fenced\n")
+            text = self.run_cli(str(root))
+            self.assertIn("| app/x.rb:1 | `` Marshal.load(`cat x`) `` |", text)
+            self.assertIn("| app/x.rb:2 | ```` Marshal.load(data) # ``` fenced ```` |", text)
+
     def test_forced_stack_overrides_detection_and_unknown_stack_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -190,6 +200,25 @@ class Cli(unittest.TestCase):
             self.assertEqual(data["stacks"], ["python"])
             self.assertEqual(data["leads"][0]["path"], "x.py")
             self.assertNotEqual(si.main([str(root), "--stack", "cobol"]), 0)
+
+    def test_leads_are_ordered_by_stack_then_reference_category_order_then_path_and_line(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "z.py", "os.system(cmd)\n")
+            write(root, "c.go", 'exec.Command("sh")\n')
+            write(root, "b/x.py", "pickle.loads(b)\n")
+            write(root, "a/views.py", "DEBUG = True\n@app.route('/')\n")
+            data = json.loads(self.run_cli(str(root), "--stack", "python", "--stack", "go", "--json"))
+            self.assertEqual(
+                [(lead["stack"], lead["category"], lead["path"], lead["line"]) for lead in data["leads"]],
+                [
+                    ("go", "Interpreters", "c.go", 1),
+                    ("python", "Entry points", "a/views.py", 2),
+                    ("python", "Interpreters", "b/x.py", 1),
+                    ("python", "Interpreters", "z.py", 1),
+                    ("python", "Config", "a/views.py", 1),
+                ],
+            )
 
     def test_installed_copies_of_this_skill_are_neither_detected_nor_scanned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -205,12 +234,40 @@ class Cli(unittest.TestCase):
             self.assertEqual(data["stacks"], ["go"])
             self.assertEqual({lead["path"] for lead in data["leads"]}, {"main.go"})
 
+    def test_json_output_lists_the_directories_that_were_not_scanned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "go.mod", "module example\n")
+            write(root, "bin/tool.go", "package main\n")
+            write(root, "web/node_modules/dep/a.js", "exec(cmd)\n")
+            write(root, ".claude/skills/web-security-audit/SKILL.md", "---\nname: web-security-audit\n---\n")
+            write(root, "src/main.go", "package main\n")
+            data = json.loads(self.run_cli(str(root), "--json"))
+            self.assertEqual(data["skipped"], [".claude/skills/web-security-audit", "bin", "web/node_modules"])
+
+    def test_markdown_output_counts_skipped_directories_by_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "Gemfile", "")
+            write(root, "bin/rails", "exec(cmd)\n")
+            write(root, "node_modules/a.js", "")
+            write(root, "web/node_modules/b.js", "")
+            text = self.run_cli(str(root))
+            self.assertIn("Skipped directories: `bin` (1), `node_modules` (2)", text)
+
+    def test_markdown_output_has_no_skipped_line_when_nothing_was_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "Gemfile", "")
+            self.assertNotIn("Skipped directories", self.run_cli(str(root)))
+
     def test_no_detected_stack_still_runs_the_frontend_and_node_searches_with_a_note(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root, "page.js", "el.innerHTML = data;\n")
             data = json.loads(self.run_cli(str(root), "--json"))
             self.assertEqual(data["stacks"], [])
+            self.assertEqual(data["searched_stacks"], ["frontend", "javascript-node"])
             self.assertTrue(data["note"])
             self.assertIn("page.js", {lead["path"] for lead in data["leads"]})
 

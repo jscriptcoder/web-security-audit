@@ -15,9 +15,10 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import Iterable, Iterator, Optional
+from pathlib import Path, PurePosixPath
+from typing import Iterable, Optional
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 
@@ -109,26 +110,37 @@ def _is_this_skill(directory: Path) -> bool:
         return False
 
 
-def _walk_files(root: Path) -> Iterator[Path]:
-    stack = [root]
-    while stack:
-        current = stack.pop()
+def _walk(root: Path) -> tuple[list[Path], list[Path]]:
+    """Return the files under root and the directories left unread as excluded or as a copy of this skill."""
+    files: list[Path] = []
+    skipped: list[Path] = []
+    pending = [root]
+    while pending:
+        current = pending.pop()
         try:
             entries = sorted(current.iterdir(), key=lambda p: p.name)
         except OSError:
             continue
         for entry in entries:
             if entry.is_dir():
-                if entry.name not in EXCLUDED_DIRS and not _is_this_skill(entry):
-                    stack.append(entry)
+                if entry.name in EXCLUDED_DIRS or _is_this_skill(entry):
+                    skipped.append(entry)
+                else:
+                    pending.append(entry)
             elif entry.is_file():
-                yield entry
+                files.append(entry)
+    return files, skipped
 
 
 def detect_stacks(root: Path) -> list[str]:
     """Return the sorted, deduplicated stacks whose manifests appear under root."""
+    files, _ = _walk(root)
+    return _stacks_from_manifests(files)
+
+
+def _stacks_from_manifests(files: Iterable[Path]) -> list[str]:
     found: set[str] = set()
-    for path in _walk_files(root):
+    for path in files:
         name = path.name
         if name == "package.json":
             found.update(_stacks_for_package_json(path))
@@ -181,47 +193,83 @@ def _excerpt(line: str) -> str:
     return stripped if len(stripped) <= EXCERPT_LIMIT else stripped[:EXCERPT_LIMIT] + "…"
 
 
+def _text_lines(path: Path) -> Optional[list[str]]:
+    try:
+        if path.stat().st_size > MAX_FILE_BYTES or _is_binary(path):
+            return None
+        return path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+
+
+Compiled = dict[str, list[tuple[str, re.Pattern[str]]]]
+
+
+def _scan_files(root: Path, files: Iterable[Path], compiled: Compiled) -> list[Lead]:
+    """Read each file once and run every stack's searches over it, one lead per stack and category per line."""
+    leads: list[Lead] = []
+    for path in files:
+        lines = _text_lines(path)
+        if lines is None:
+            continue
+        rel = path.relative_to(root).as_posix()
+        for number, line in enumerate(lines, start=1):
+            for stack, searches in compiled.items():
+                seen: set[str] = set()
+                for category, pattern in searches:
+                    if category in seen or not pattern.search(line):
+                        continue
+                    seen.add(category)
+                    leads.append(Lead(stack, category, rel, number, _excerpt(line)))
+    return leads
+
+
 def scan(root: Path, searches: Iterable[tuple[str, str]], stack: str, errors: Optional[list[str]] = None) -> list[Lead]:
     """Run each search over the text files under root. Invalid patterns are recorded, not raised."""
     compiled, compile_errors = _compile(searches)
     if errors is not None:
         errors.extend(compile_errors)
-    leads: list[Lead] = []
-    for path in _walk_files(root):
-        try:
-            if path.stat().st_size > MAX_FILE_BYTES or _is_binary(path):
-                continue
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            continue
-        rel = path.relative_to(root).as_posix()
-        for number, line in enumerate(lines, start=1):
-            seen: set[str] = set()
-            for category, pattern in compiled:
-                if category in seen or not pattern.search(line):
-                    continue
-                seen.add(category)
-                leads.append(Lead(stack, category, rel, number, _excerpt(line)))
-    return leads
+    files, _ = _walk(root)
+    return _scan_files(root, files, {stack: compiled})
 
 
-def inventory(root: Path, stacks: list[str]) -> tuple[list[Lead], list[str]]:
-    leads: list[Lead] = []
+def inventory(root: Path, stacks: list[str], files: Iterable[Path]) -> tuple[list[Lead], list[str]]:
     errors: list[str] = []
+    compiled: Compiled = {}
+    # Stacks in the given order, then categories in the order their reference declares them.
+    rank: dict[tuple[str, str], int] = {}
     for stack in stacks:
         for rel in STACK_REFERENCES[stack]:
             reference = SKILL_ROOT / rel
             if not reference.is_file():
                 errors.append(f"{stack}: missing reference {rel}")
                 continue
-            leads.extend(scan(root, load_searches(reference), stack, errors))
-    return leads, errors
+            searches = load_searches(reference)
+            for category, _ in searches:
+                rank.setdefault((stack, category), len(rank))
+            patterns, compile_errors = _compile(searches)
+            compiled.setdefault(stack, []).extend(patterns)
+            errors.extend(compile_errors)
+    leads = _scan_files(root, files, compiled)
+    return sorted(leads, key=lambda lead: (rank[(lead.stack, lead.category)], lead.path, lead.line)), errors
 
 
-def render_markdown(root: Path, stacks: list[str], leads: list[Lead], errors: list[str], note: str) -> str:
+def _code_span(text: str) -> str:
+    """Fence text with more backticks than its longest backtick run, so template literals and shell backticks stay inside."""
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    if not longest:
+        return f"`{text}`"
+    fence = "`" * (longest + 1)
+    return f"{fence} {text} {fence}"
+
+
+def render_markdown(root: Path, stacks: list[str], leads: list[Lead], errors: list[str], note: str, skipped: list[str]) -> str:
     lines = [f"# Sink inventory for {root}", "", f"Stacks: {', '.join(stacks) if stacks else 'none detected'}"]
     if note:
         lines.append(f"Note: {note}")
+    if skipped:
+        counts = Counter(PurePosixPath(rel).name for rel in skipped)
+        lines.append("Skipped directories: " + ", ".join(f"`{name}` ({count})" for name, count in sorted(counts.items())))
     lines += ["", "Leads are places to read, not findings. Judge each against the matching reference.", ""]
     groups: dict[tuple[str, str], list[Lead]] = {}
     for lead in leads:
@@ -230,7 +278,7 @@ def render_markdown(root: Path, stacks: list[str], leads: list[Lead], errors: li
         lines += [f"## {stack}: {category} ({len(items)})", "", "| Location | Excerpt |", "| --- | --- |"]
         for lead in items:
             excerpt = lead.excerpt.replace("|", "\\|")
-            lines.append(f"| {lead.path}:{lead.line} | `{excerpt}` |")
+            lines.append(f"| {lead.path}:{lead.line} | {_code_span(excerpt)} |")
         lines.append("")
     if not leads:
         lines += ["No leads matched. Check the stack detection and the excluded directories.", ""]
@@ -255,18 +303,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"unknown stack(s): {', '.join(unknown)}; choose from {', '.join(STACK_REFERENCES)}", file=sys.stderr)
         return 2
 
-    stacks = sorted(set(args.stack)) if args.stack else detect_stacks(root)
+    files, skipped_dirs = _walk(root)
+    skipped = sorted(path.relative_to(root).as_posix() for path in skipped_dirs)
+    stacks = sorted(set(args.stack)) if args.stack else _stacks_from_manifests(files)
     note = ""
     effective = stacks
     if not stacks:
         effective = ["frontend", "javascript-node"]
         note = "no manifest recognized; ran the frontend and Node searches as a fallback. Use --stack to choose."
-    leads, errors = inventory(root, effective)
+    leads, errors = inventory(root, effective, files)
 
     if args.json:
-        print(json.dumps({"root": str(root), "stacks": stacks, "note": note, "leads": [asdict(lead) for lead in leads], "errors": errors}, indent=2))
+        print(json.dumps({"root": str(root), "stacks": stacks, "searched_stacks": effective, "note": note, "leads": [asdict(lead) for lead in leads], "errors": errors, "skipped": skipped}, indent=2))
     else:
-        print(render_markdown(root, stacks, leads, errors, note))
+        print(render_markdown(root, stacks, leads, errors, note, skipped))
     return 0
 
 
