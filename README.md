@@ -2,7 +2,7 @@
 
 An agent skill for evidence-based security audits of web applications, frontend and backend. It walks an AI coding agent through the [PortSwigger Web Security Academy](https://portswigger.net/web-security/all-topics) topics, adds framework- and stack-specific checks, and produces findings with explicit confidence, severity, remediation, regression checks and a coverage record.
 
-Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that loads `SKILL.md` skills. `agents/openai.yaml` adds display metadata for OpenAI Codex.
+Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that loads `SKILL.md` skills. `skills/web-security-audit/agents/openai.yaml` adds display metadata for OpenAI Codex.
 
 > Not affiliated with or endorsed by PortSwigger. The Academy is used as a coverage map; the checks are original audit procedures, not copied lab content.
 
@@ -14,7 +14,7 @@ Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that
 - **Omission checks.** Two mapping-step comparisons find what a sink search cannot: declared security fields (MFA secrets, expiry, lockout, tenant) with no code that enforces them, and sibling handlers on one resource where one drops a control the others apply.
 - **Honest coverage.** A ledger records what was reviewed, not applicable, blocked or not reviewed, so a bounded audit is never presented as proof of security.
 - **Safe by default.** Source review unless runtime testing is explicitly in scope; synthetic data and minimal proofs; audited content is treated as data, never as instructions.
-- **A deterministic first pass.** `scripts/sink_inventory.py` detects the stacks from manifests and prints the entry-point, enforcement, interpreter and outbound-request leads from the stack hint files as one table, so the agent reads leads instead of inventing searches.
+- **A deterministic first pass.** `skills/web-security-audit/scripts/sink_inventory.py` detects the stacks from manifests and prints the entry-point, enforcement, interpreter and outbound-request leads from the stack hint files as one table, so the agent reads leads instead of inventing searches.
 
 ## Install
 
@@ -33,20 +33,20 @@ The [`skills` CLI](https://skills.sh) clones this repository, asks which agents 
 | `-y` | Skip the confirmation prompts |
 | `--copy` | Copy the files instead of symlinking them to agent directories |
 
-Run `npx skills update web-security-audit` to pick up a new version and `npx skills remove web-security-audit` to uninstall. Claude.ai is not covered by the CLI; upload the folder as a zip instead (see below).
+Run `npx skills update web-security-audit` to pick up a new version and `npx skills remove web-security-audit` to uninstall. Claude.ai is not covered by the CLI; upload `skills/web-security-audit/` as a zip instead (see below).
 
-The install includes `evals/`, whose fixtures contain deliberately vulnerable code. `scripts/sink_inventory.py` skips any directory holding a copy of this skill, so a project-level install does not show up as leads in your own audit.
+Only `skills/web-security-audit/` is installed; the tests, evals and this README stay in the repository. The sink inventory skips any directory holding a copy of this skill, so a project-level install does not show up as leads in your own audit.
 
 ### Manually
 
-Copy this folder into a skills directory so that `SKILL.md` ends up at `<skills dir>/web-security-audit/SKILL.md`. The folder name must stay `web-security-audit` to match the `name` in the frontmatter.
+Copy `skills/web-security-audit/` into a skills directory so that `SKILL.md` ends up at `<skills dir>/web-security-audit/SKILL.md`. The folder name must stay `web-security-audit` to match the `name` in the frontmatter.
 
 **Shortest path for a shared repository.** Commit the folder as `<repo>/.agents/skills/web-security-audit/`. Codex, Cursor, Devin and Devin CLI all read that directory. Add `<repo>/.claude/skills/web-security-audit/` as well (a copy or a symlink) for Claude Code.
 
 | Agent | Project-level location | User-level location |
 | --- | --- | --- |
 | Claude Code | `<repo>/.claude/skills/` | `~/.claude/skills/` |
-| Claude.ai | Upload the folder as a zip in the Skills settings | |
+| Claude.ai | Upload `skills/web-security-audit/` as a zip in the Skills settings | |
 | Codex (CLI, IDE, ChatGPT desktop) | `<repo>/.agents/skills/` | `~/.agents/skills/`; admins can use `/etc/codex/skills/` |
 | Cursor | `<repo>/.cursor/skills/` or `<repo>/.agents/skills/`; also reads `.claude/skills/` and `.codex/skills/` | `~/.cursor/skills/` or `~/.agents/skills/`; only `~/.cursor/skills/` syncs to Cloud Agents |
 | Devin (cloud) | `<repo>/.agents/skills/` (recommended); also reads `.claude/skills/`, `.devin/skills/`, `.github/skills/`, `.cognition/skills/` and `.windsurf/skills/` | Not applicable; Devin indexes skills from every connected repository |
@@ -72,37 +72,43 @@ Sources: [Claude Code skills](https://code.claude.com/docs/en/skills), [Codex sk
 
 ## Layout
 
+Everything under `skills/web-security-audit/` is the installable skill; the rest supports development.
+
 ```text
-SKILL.md                     Workflow, operating rules and routing table
-references/
-  methodology.md             Scope, attack-surface mapping, partial-stack audits, coverage
-  frontend-frameworks.md     Framework escape hatches, sanitizers, SSR state, Server Actions, CSPT
-  frontend-runtime.md        Bundle secrets, tokens and logout, service workers, third-party scripts
-  stacks/                    Per-stack search leads and safe defaults
-  identity-access.md         Authentication, access control, OAuth, JWT, SAML, credentials and crypto
-  browser-security.md        XSS, CSRF, CORS, clickjacking, server-side open redirects, DOM
-  injection.md               SQL, NoSQL, command, XXE, SSTI
-  files-data.md              Path traversal, uploads, disclosure, deserialization
-  api-realtime.md            REST APIs, WebSockets
-  graphql.md                 GraphQL servers, gateways, subscriptions and clients
-  business-logic.md          Logic flaws, race conditions
-  http-infrastructure.md     SSRF, cache deception/poisoning, Host header, smuggling
-  prototype-pollution.md
-  llm-integrations.md
-  platform-baseline.md       Dependencies, CSP and cookies, deployment
-  reporting.md               Confidence, severity and finding format
-assets/
-  audit-report.md            Report template
-  coverage-ledger.md         Coverage ledger template
-scripts/
-  sink_inventory.py          Stack detection and first-pass lead table (python3, no dependencies)
-  test_sink_inventory.py     Its tests (python3 -m unittest discover scripts)
+skills/web-security-audit/
+  SKILL.md                   Workflow, operating rules and routing table
+  references/
+    methodology.md           Scope, attack-surface mapping, partial-stack audits, coverage
+    frontend-frameworks.md   Framework escape hatches, sanitizers, SSR state, Server Actions, CSPT
+    frontend-runtime.md      Bundle secrets, tokens and logout, service workers, third-party scripts
+    stacks/                  Per-stack search leads and safe defaults
+    identity-access.md       Authentication, access control, OAuth, JWT, SAML, credentials and crypto
+    browser-security.md      XSS, CSRF, CORS, clickjacking, server-side open redirects, DOM
+    injection.md             SQL, NoSQL, command, XXE, SSTI
+    files-data.md            Path traversal, uploads, disclosure, deserialization
+    api-realtime.md          REST APIs, WebSockets
+    graphql.md               GraphQL servers, gateways, subscriptions and clients
+    business-logic.md        Logic flaws, race conditions
+    http-infrastructure.md   SSRF, cache deception/poisoning, Host header, smuggling
+    prototype-pollution.md
+    llm-integrations.md
+    platform-baseline.md     Dependencies, CSP and cookies, deployment
+    reporting.md             Confidence, severity and finding format
+  assets/
+    audit-report.md          Report template
+    coverage-ledger.md       Coverage ledger template
+  scripts/
+    sink_inventory.py        Stack detection and first-pass lead table (python3, no dependencies)
+  agents/openai.yaml         Codex display metadata
+  LICENSE
+tests/
+  test_sink_inventory.py     Inventory tests (python3 -m unittest discover tests)
 evals/                       Test prompts and fixtures (see evals/README.md)
 ```
 
 ## Contributing
 
-To add a stack, copy the shape of an existing file in `references/stacks/` and link it from `references/stacks/README.md`; the `Starting searches` block at the end of each file is what `scripts/sink_inventory.py` runs, so keep the `Category: regex` line shape. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change.
+To add a stack, copy the shape of an existing file in `skills/web-security-audit/references/stacks/` and link it from its `README.md`; the `Starting searches` block at the end of each file is what `scripts/sink_inventory.py` runs, so keep the `Category: regex` line shape. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change. Run the inventory tests with `python3 -m unittest discover tests`.
 
 ## License
 

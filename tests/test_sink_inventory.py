@@ -1,16 +1,20 @@
-"""Behavior tests for sink_inventory.py. Run: python3 -m unittest discover scripts"""
+"""Behavior tests for sink_inventory.py. Run: python3 -m unittest discover tests"""
 
 import io
 import json
 import re
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import sink_inventory as si
+# The tests stay out of the skill folder so installers do not ship them.
+SKILL = Path(__file__).resolve().parent.parent / "skills" / "web-security-audit"
+REFERENCES = SKILL / "references"
+sys.path.insert(0, str(SKILL / "scripts"))
 
-REFERENCES = Path(__file__).resolve().parent.parent / "references"
+import sink_inventory as si  # noqa: E402
 
 
 def write(root: Path, rel: str, text: str) -> None:

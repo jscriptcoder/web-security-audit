@@ -18,7 +18,7 @@ Test cases for checking that the skill finds real issues and avoids false positi
 
 With the skill-creator skill in Claude Code, ask it to run the evals in `evals/evals.json` with and without this skill. Copy the fixtures to a workspace outside the skill folder first, and tell the auditing agents not to open `evals/`, so they cannot read the expectations.
 
-Without tooling: give each prompt to an agent with the skill installed, save the report, and check it against the eval's expectations by hand. When the auditing agent is a Claude Code subagent, the harness refuses to let it write a report file; ask it to return the full report as its final message and grade that text. A with-skill subagent is told to read only `SKILL.md`, `references/`, `assets/` and `scripts/`.
+Without tooling: give each prompt to an agent with the skill installed, save the report, and check it against the eval's expectations by hand. When the auditing agent is a Claude Code subagent, the harness refuses to let it write a report file; ask it to return the full report as its final message and grade that text. A with-skill subagent is told to read only `skills/web-security-audit/` (`SKILL.md`, `references/`, `assets/` and `scripts/`).
 
 ## Results so far
 
