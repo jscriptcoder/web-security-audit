@@ -18,6 +18,27 @@ Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that
 
 ## Install
 
+### With the `skills` CLI (recommended)
+
+```sh
+npx skills add jscriptcoder/web-security-audit
+```
+
+The [`skills` CLI](https://skills.sh) clones this repository, asks which agents to install for and whether to install for the current project or for your user, and puts the skill in each agent's skills directory. Useful flags:
+
+| Flag | Effect |
+| --- | --- |
+| `-g` | Install for your user instead of the current project |
+| `-a claude-code` | Install for one agent without the prompt; `-a '*'` installs for all detected agents |
+| `-y` | Skip the confirmation prompts |
+| `--copy` | Copy the files instead of symlinking them to agent directories |
+
+Run `npx skills update web-security-audit` to pick up a new version and `npx skills remove web-security-audit` to uninstall. Claude.ai is not covered by the CLI; upload the folder as a zip instead (see below).
+
+The install includes `evals/`, whose fixtures contain deliberately vulnerable code. `scripts/sink_inventory.py` skips any directory holding a copy of this skill, so a project-level install does not show up as leads in your own audit.
+
+### Manually
+
 Copy this folder into a skills directory so that `SKILL.md` ends up at `<skills dir>/web-security-audit/SKILL.md`. The folder name must stay `web-security-audit` to match the `name` in the frontmatter.
 
 **Shortest path for a shared repository.** Commit the folder as `<repo>/.agents/skills/web-security-audit/`. Codex, Cursor, Devin and Devin CLI all read that directory. Add `<repo>/.claude/skills/web-security-audit/` as well (a copy or a symlink) for Claude Code.

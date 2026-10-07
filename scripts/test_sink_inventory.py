@@ -122,6 +122,16 @@ class Scan(unittest.TestCase):
             leads = si.scan(root, [("Interpreters", r"exec\(")], stack="js")
             self.assertEqual([lead.path for lead in leads], ["src/a.js"])
 
+    def test_other_agent_skills_in_the_repository_are_still_scanned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, ".claude/skills/web-security-audit/SKILL.md", "---\nname: web-security-audit\n---\n")
+            write(root, ".claude/skills/web-security-audit/evals/a.js", "exec(cmd)\n")
+            write(root, ".claude/skills/deploy/SKILL.md", "---\nname: deploy\n---\n")
+            write(root, ".claude/skills/deploy/run.js", "exec(cmd)\n")
+            leads = si.scan(root, [("Interpreters", r"exec\(")], stack="js")
+            self.assertEqual([lead.path for lead in leads], [".claude/skills/deploy/run.js"])
+
     def test_binary_files_are_skipped_and_long_excerpts_are_truncated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -176,6 +186,20 @@ class Cli(unittest.TestCase):
             self.assertEqual(data["stacks"], ["python"])
             self.assertEqual(data["leads"][0]["path"], "x.py")
             self.assertNotEqual(si.main([str(root), "--stack", "cobol"]), 0)
+
+    def test_installed_copies_of_this_skill_are_neither_detected_nor_scanned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "go.mod", "module example\n")
+            write(root, "main.go", 'package main\nfunc h() { exec.Command("sh", "-c", c) }\n')
+            for skills_dir in [".claude/skills", ".agents/skills"]:
+                copy = f"{skills_dir}/web-security-audit"
+                write(root, f"{copy}/SKILL.md", "---\nname: web-security-audit\ndescription: x\n---\n")
+                write(root, f"{copy}/evals/fixtures/shop/package.json", json.dumps({"dependencies": {"express": "4"}}))
+                write(root, f"{copy}/evals/fixtures/shop/server.go", 'func h() { exec.Command("sh", "-c", c) }\n')
+            data = json.loads(self.run_cli(str(root), "--json"))
+            self.assertEqual(data["stacks"], ["go"])
+            self.assertEqual({lead["path"] for lead in data["leads"]}, {"main.go"})
 
     def test_no_detected_stack_still_runs_the_frontend_and_node_searches_with_a_note(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

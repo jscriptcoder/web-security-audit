@@ -63,6 +63,9 @@ EXCLUDED_DIRS = {
     ".next", ".nuxt", ".svelte-kit", ".output", "target", "bin", "obj", "vendor",
     "coverage", "__pycache__", ".venv", "venv", ".idea", ".vscode", ".gradle", ".tox",
 }
+# Installers such as `npx skills add` copy this whole skill, eval fixtures included,
+# into the audited repository; its intentionally vulnerable code is not the target's.
+SKILL_NAME_LINE = re.compile(r"^name:\s*web-security-audit\s*$", re.MULTILINE)
 MAX_FILE_BYTES = 2_000_000
 EXCERPT_LIMIT = 160
 
@@ -99,6 +102,13 @@ def _stacks_for_package_json(path: Path) -> list[str]:
     return stacks
 
 
+def _is_this_skill(directory: Path) -> bool:
+    try:
+        return bool(SKILL_NAME_LINE.search((directory / "SKILL.md").read_text(encoding="utf-8", errors="replace")))
+    except OSError:
+        return False
+
+
 def _walk_files(root: Path) -> Iterator[Path]:
     stack = [root]
     while stack:
@@ -109,7 +119,7 @@ def _walk_files(root: Path) -> Iterator[Path]:
             continue
         for entry in entries:
             if entry.is_dir():
-                if entry.name not in EXCLUDED_DIRS:
+                if entry.name not in EXCLUDED_DIRS and not _is_this_skill(entry):
                     stack.append(entry)
             elif entry.is_file():
                 yield entry

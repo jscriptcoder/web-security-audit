@@ -6,3 +6,7 @@ Thumbs.db
 
 # Eval runs belong in a sibling *-workspace/ directory, never in the skill
 *-workspace/
+
+# Python bytecode
+__pycache__/
+*.pyc
