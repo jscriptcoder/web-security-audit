@@ -29,6 +29,7 @@ Each eval was run with the skill and without it (same model, same prompt), and t
 | `frontend-only-react-audit` | Opus 5.5 | 14/14 | 13/14 | 1 |
 | `spring-kotlin-backend-audit` | Opus 5.5 | 12/12 | 11/12 | 1 |
 | `react-pr-diff-review` | Opus 5.5 | 6/6 | 6/6 | 1 |
+| `react-pr-diff-review` | Fable 5.1, SKILL.md without the example-requests section (2026-10-12) | 6/6 | not rerun | 1 |
 | `graphql-monorepo-audit` | Opus 5.5 | 12/12 | 12/12 | 1 |
 | `next-store-hard-audit` | Opus 4.8 | 16/16, 13/16 | 13/16, 13/16 | 2 |
 | `next-store-hard-audit` | Opus 5.5 | 16, 16, 16 (current skill); 15, 16 (previous skill) | 15/16, 15/16 | 2–3 |

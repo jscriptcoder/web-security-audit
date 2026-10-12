@@ -67,13 +67,3 @@ Load an additional group only when evidence exposes its boundary. Examples: Grap
 ## Source use
 
 Use [PortSwigger's topic catalog](https://portswigger.net/web-security/all-topics) for coverage and the primary links in each resource for targeted detail. Treat the bundled checks as original audit procedures informed by those topics, not copied lab solutions or certification/compliance claims. For unfamiliar frameworks, uncertain mitigations, version-specific advisories or changing browser behavior, verify current primary documentation. Dated claims in the references (CVE fix versions, library defaults, browser support) were last reviewed in October 2026; treat anything that could have changed since as a lead to verify, not a fact. Load only the relevant material; continue offline from the bundled guidance and state any uncertainty when verification is unavailable.
-
-## Example requests and routing
-
-- “Audit this React/Node monorepo.” Map shared code, triage all topics, then load identity, browser, API and any other groups justified by the surface map; include the platform baseline.
-- “Audit our Angular frontend; the API is in another repo.” Follow the partial-stack guidance: load browser security, frontend frameworks and frontend runtime, review client-side OAuth/token handling with identity/access, and record backend suspicions as handoff hypotheses rather than `blocked` rows.
-- “Review this React PR for XSS.” Load browser security and frontend frameworks only; trace each changed escape hatch, URL attribute and navigation to its data source; report only the changed paths.
-- “Audit our Spring Boot service.” Load the Java/Kotlin stack hints, then identity/access, injection, files/data and the platform baseline; check Actuator exposure and `SecurityFilterChain` ordering early.
-- “Review this GraphQL resolver diff for security.” Load GraphQL and identity/access, check every path that reaches the changed types (nested fields, data loaders, `node` lookups, mutation payloads), trace policy into called services and inspect only related changed paths. Do not broaden to a whole-site scan.
-- “Validate suspected cache deception on our isolated staging cache.” Load HTTP infrastructure, establish cache-key isolation, compare synthetic identities and report demonstrated private-data exposure with controls and scope.
-- “Review the authorization of our AI support tool.” Load LLM and identity/access; trace tool enforcement and tenant binding independently of model instructions.
