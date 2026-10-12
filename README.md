@@ -1,5 +1,7 @@
 # Web Security Audit skill
 
+[![CI](https://github.com/jscriptcoder/web-security-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/jscriptcoder/web-security-audit/actions/workflows/ci.yml)
+
 An agent skill for evidence-based security audits of web applications, frontend and backend. It walks an AI coding agent through the [PortSwigger Web Security Academy](https://portswigger.net/web-security/all-topics) topics, adds framework- and stack-specific checks, and produces findings with explicit confidence, severity, remediation, regression checks and a coverage record.
 
 Works with Claude Code, Claude.ai, Codex, Cursor, Devin and any other agent that loads `SKILL.md` skills. `skills/web-security-audit/agents/openai.yaml` adds display metadata for OpenAI Codex.
@@ -103,12 +105,14 @@ skills/web-security-audit/
   LICENSE
 tests/
   test_sink_inventory.py     Inventory tests (python3 -m unittest discover tests)
+  test_stack_patterns.py     Smoke tests: every `Starting searches` pattern matches its idiom and finds leads in the fixtures
+.github/workflows/ci.yml     Runs both test files on Python 3.9 and the current 3.x for every push and pull request
 evals/                       Test prompts and fixtures (see evals/README.md)
 ```
 
 ## Contributing
 
-To add a stack, copy the shape of an existing file in `skills/web-security-audit/references/stacks/` and link it from its `README.md`; the `Starting searches` block at the end of each file is what `scripts/sink_inventory.py` runs, so keep the `Category: regex` line shape. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change. Run the inventory tests with `python3 -m unittest discover tests`.
+To add a stack, copy the shape of an existing file in `skills/web-security-audit/references/stacks/` and link it from its `README.md`; the `Starting searches` block at the end of each file is what `scripts/sink_inventory.py` runs, so keep the `Category: regex` line shape and add a sample line for any new category to `tests/test_stack_patterns.py`; CI fails when a pattern stops matching its idiom. To change audit behavior, add or update a case in `evals/` first and compare results with and without the change. Run the inventory tests with `python3 -m unittest discover tests`.
 
 ## License
 

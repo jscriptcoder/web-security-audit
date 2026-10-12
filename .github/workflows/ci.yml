@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Unit and stack-pattern smoke tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is the minimum sink_inventory.py declares; 3.x is the current release.
+        python: ["3.9", "3.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run the test suite
+        run: python -m unittest discover tests -v
+      - name: Run the sink inventory against a fixture
+        run: python skills/web-security-audit/scripts/sink_inventory.py evals/fixtures/spring-orders --json > /dev/null
