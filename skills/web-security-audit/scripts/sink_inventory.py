@@ -288,6 +288,10 @@ def render_markdown(root: Path, stacks: list[str], leads: list[Lead], errors: li
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    # Excerpts carry whatever the audited source contains; a legacy console code page
+    # (cp1252 on Windows) must not abort the run, so always emit UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("path", help="repository or directory to inventory")
     parser.add_argument("--stack", action="append", default=[], help=f"force a stack ({', '.join(STACK_REFERENCES)}); repeatable")

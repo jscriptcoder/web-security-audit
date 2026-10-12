@@ -2,7 +2,9 @@
 
 import io
 import json
+import os
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -155,6 +157,20 @@ class Scan(unittest.TestCase):
 
 
 class Cli(unittest.TestCase):
+    def test_markdown_output_survives_a_console_that_cannot_encode_the_excerpt(self) -> None:
+        # Windows consoles default to a legacy code page; a non-ASCII excerpt must not crash the run.
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp), "package.json", json.dumps({"dependencies": {"express": "4"}}))
+            write(Path(tmp), "app.js", "app.get('/orders/:id', list) // ✓ → €\n")
+            result = subprocess.run(
+                [sys.executable, str(SKILL / "scripts" / "sink_inventory.py"), tmp],
+                capture_output=True,
+                env={**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", "replace"))
+            self.assertIn("app.js:1", result.stdout.decode("utf-8", "replace"))
+            self.assertIn("✓ → €", result.stdout.decode("utf-8", "replace"))
+
     def run_cli(self, *args: str) -> str:
         out = io.StringIO()
         with redirect_stdout(out):
