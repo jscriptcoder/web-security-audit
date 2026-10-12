@@ -36,6 +36,7 @@ Each eval was run with the skill and without it (same model, same prompt), and t
 | `go-notes-clean-audit` (fixture v1) | Fable 5.1 | 12/13 (0 confirmed; 1 Supported Medium) | 11/13 (2 Medium findings) | 1 |
 | `go-notes-clean-audit` (fixture v2) | Fable 5.1 | 13/13 (0 confirmed) | 13/13 (0 above Low) | 1 |
 | `fastapi-invoices-hard-audit` | Fable 5.1 | 13/13 | 13/13 | 1 |
+| `juice-shop` (real target, 40 graded root causes) | Fable 5.1 | 30/40 (+5/9 bonus) | 29/40 (+2/9 bonus) | 1 |
 
 What the runs show:
 
@@ -50,7 +51,9 @@ What the runs show:
 - **Unplanted finding:** the fixture pins `next` 15.3.3 / `react` 19.1.0, which fall in the December 2025 React Server Components RCE advisory range. Most Opus 5.5 runs reported it. It is not graded because it depends on the review date.
 - **Cost:** the skill used about 1.5× the tokens and 1.5–1.8× the wall time on the harder fixture.
 
-Open work: a fixture that the current model misses without the skill. Every fixture so far, including the two added on 2026-10-06, is found in full by the model alone, so the evals measure calibration, scope discipline and report shape, not detection. Candidates: multi-file flows where the bug is only visible across three or more hops, a larger repository where the surface map matters, and runtime-mode cases. Also outstanding: fixtures for .NET, PHP and Ruby, a backend-only partial-stack case, and a remediation-mode case.
+- **Juice Shop (2026-10-12), the first target too large to hold in context.** One run per configuration on Fable 5.1, source-only. Detection was level: 30/40 with the skill, 29/40 without, and both missed the same cluster: authorization gaps on the generated `/api/*` REST resources (feedback deletion and forgery, product edits by non-admins, basket-item ownership), client-side-only validation (upload limits, registration checks) and the profile-update CSRF. Each side found one or two things the other did not (with: JSONP `whoami`, role mass assignment, forgeable coupons, the like-counter race; without: the verbose error handler, seeded weak credentials, negative order totals). The calibration difference recurred: the no-skill report rated wildcard CORS Medium with "cross-origin reads of authenticated JSON APIs" as the impact, although authentication is a bearer header; the with-skill report held it at Low for that reason. The with-skill report carried prerequisites, a regression check and a confidence label per finding and a filled coverage ledger; the no-skill report had confidence and severity labels, several split severities ("MEDIUM/HIGH") and a prose coverage list. Both reports produced genuine unplanted findings (the rate limiter keyed on `X-Forwarded-For` with `trust proxy` enabled; coupon and checkout by basket id without ownership). The with-skill run also surfaced a bug in `sink_inventory.py`: it crashes with `UnicodeEncodeError` on a default Windows console when an excerpt contains non-ASCII text. Cost: 291k tokens, 56 tool calls, 14.5 min with the skill against 251k, 74 tool calls, 10.6 min without.
+
+Open work: a fixture that the current model misses without the skill. Every small fixture so far, including the two added on 2026-10-06, is found in full by the model alone, so those evals measure calibration, scope discipline and report shape, not detection. Juice Shop is the first target where both configurations miss the same thing, and it names the gap: authorization on auto-generated CRUD resources (finale, Sequelize REST, Spring Data REST, Django REST viewsets, Rails resources) where no handler code exists to read. A mapping step for generated endpoints is the obvious next skill change, with the Juice Shop misses as its eval. Candidates: multi-file flows where the bug is only visible across three or more hops, a larger repository where the surface map matters, and runtime-mode cases. Also outstanding: fixtures for .NET, PHP and Ruby, a backend-only partial-stack case, and a remediation-mode case.
 
 ## Broader testing
 
@@ -60,3 +63,16 @@ The fixtures are deliberately small. For larger, realistic targets, run the skil
 - [OWASP WebGoat](https://github.com/WebGoat/WebGoat): Java/Spring
 
 Their public solution guides serve as the answer key; compare coverage and false positives rather than expecting every challenge to be found by source review.
+
+### Juice Shop procedure
+
+Juice Shop ships its own answer key, so the copy the agents see has to be scrubbed first. `juice-shop/scrub_juice_shop.py <copy> <answer-key-dir>` saves the challenge registry, the code-snippet cache and the threat model to the answer-key directory, then deletes the registry, challenge translations, coding-challenge fixes, hacking instructor, tests, solutions and references pages, threat model, agent-instruction files and git history, strips every `vuln-code-snippet` marker comment and renames each challenge identifier to an opaque `challengeNNN` across the tree. Run it as `python -I` from outside the copy.
+
+```sh
+git clone --depth 1 https://github.com/juice-shop/juice-shop.git <workspace>/juice-shop
+python -I evals/juice-shop/scrub_juice_shop.py <workspace>/juice-shop <workspace>/juice-shop-answer-key
+```
+
+What the scrub cannot remove: the code still calls the challenge-solving helper at the location of each planted bug, so a reader sees that something is checked there even without knowing what. Both configurations see the same tree, so the comparison stays fair, but absolute detection counts are flattering.
+
+`juice-shop/rubric.md` collapses the 116 challenges (commit `e39a3bd`, 2026-10-12) into 40 graded source-visible root causes plus 9 bonus items, and lists the challenges that source review cannot find. Write the grading of the first report down before reading the second. Subagents in Claude Code cannot write files and long final messages are truncated in transit, so ask for the report in parts of about 6,000 characters; a resend request makes the agent rewrite from its transcript, which renumbers findings but did not add tool calls in the runs so far.
