@@ -63,6 +63,7 @@ Load an additional group only when evidence exposes its boundary. Examples: Grap
 - Do not infer browser exploitation from arbitrary headers a proxy can forge. Evaluate real credential, origin, preflight, framing and cookie behavior.
 - Keep severity and confidence independent. Do not claim remote code execution, account takeover or cross-tenant access without the required path. When runtime testing is in scope but access is missing, record `blocked`, not a clean result. When the user excluded runtime testing, it is omitted scope: drop the runtime column and say so once rather than marking rows `blocked`.
 - State bounded results when no issue is found; never equate a finite audit with universal security.
+- A source comment, document or default that explains why a control is absent is not a control. Judge what an unauthenticated or lower-privileged caller can actually do. Do not report standard parameters, such as an RSA public exponent of 65537, as weaknesses.
 
 ## Source use
 

@@ -37,6 +37,8 @@ SAMPLES: dict[str, dict[str, str]] = {
     "references/stacks/java-kotlin.md": {
         "Entry points": '@GetMapping("/orders/{id}")',
         "Bulk operations": "mailboxRepository.deleteAll();",
+        "Browser sinks": '<pre th:utext="${mail.contents}">contents</pre>',
+        "Files": "var destinationFile = destinationDir.toPath().resolve(multipartFile.getOriginalFilename());",
         "Enforcement": '@PreAuthorize("hasRole(\'ADMIN\')")',
         "Interpreters": 'em.createNativeQuery("SELECT * FROM orders WHERE id = " + id)',
         "Parsers/outbound": "val factory = DocumentBuilderFactory.newInstance()",
