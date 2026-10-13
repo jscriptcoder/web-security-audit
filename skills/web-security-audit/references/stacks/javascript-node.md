@@ -4,7 +4,7 @@ Covers Node.js with Express, NestJS, Fastify, Koa and Hapi, plus Deno and Bun. M
 
 ## Entry points and enforcement
 
-- **Entry points:** `app.get/post/...`, `router.*`, NestJS `@Controller` with `@Get/@Post`, `@Body`, `@Param`, `@Query`, Fastify route schemas, GraphQL resolvers, `ws`/Socket.IO `on('message')` handlers, queue consumers and cron jobs.
+- **Entry points:** `app.get/post/...`, `router.*`, NestJS `@Controller` with `@Get/@Post`, `@Body`, `@Param`, `@Query`, Fastify route schemas, GraphQL resolvers, `ws`/Socket.IO `on('message')` handlers, queue consumers and cron jobs. Generated REST resources (finale or epilogue `resource({ model, endpoints })` over Sequelize) expose list, create, read, update and delete with no handler code; their only controls are the `auth` hooks or middleware on the mount, so compare them with the hand-written routes for the same model.
 - **Enforcement:** middleware order (a route registered before `app.use(auth)` is unprotected), NestJS `@UseGuards` and global guards with `@Public()`-style metadata, Passport strategies, per-handler ownership checks and ORM scopes.
 - **Input shape:** `express.urlencoded({ extended: true })` and `qs` turn `a[b]=c` into nested objects, which feeds NoSQL operator injection and prototype pollution. NestJS `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })` strips or rejects unknown fields.
 
@@ -32,7 +32,7 @@ Covers Node.js with Express, NestJS, Fastify, Koa and Hapi, plus Deno and Bun. M
 ## Starting searches
 
 ```text
-Entry points: app\.(get|post|put|patch|delete|use)|router\.|@(Controller|Get|Post|Put|Patch|Delete)\(|resolvers|on\(['"]message
+Entry points: app\.(get|post|put|patch|delete|use)|router\.|@(Controller|Get|Post|Put|Patch|Delete)\(|resolvers|on\(['"]message|(finale|epilogue)\.resource\(
 Interpreters: \$queryRawUnsafe|\.raw\(|whereRaw|sequelize\.query|child_process|exec\(|eval\(|new Function|vm\.run|\.compile\(|renderString
 Data flow: req\.(body|query|params)|merge\(|_\.set|defaultsDeep|\$where|\$regex
 Outbound/config: fetch\(|axios|got\(|trust proxy|cors\(|jwt\.(decode|verify)|session\(

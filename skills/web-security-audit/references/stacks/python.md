@@ -4,7 +4,7 @@ Covers Django, Django REST Framework, Flask and FastAPI/Starlette.
 
 ## Entry points and enforcement
 
-- **Entry points:** Django `urls.py` and views, DRF `ViewSet`/`APIView`, Flask `@app.route`/blueprints, FastAPI `@app.get/post` and `APIRouter`, Celery tasks, management commands and signal handlers.
+- **Entry points:** Django `urls.py` and views, DRF `ViewSet`/`APIView`, Flask `@app.route`/blueprints, FastAPI `@app.get/post` and `APIRouter`, Celery tasks, management commands and signal handlers. A DRF `router.register(prefix, ModelViewSet)` line exposes list, create, retrieve, update, partial update and destroy at once; read the viewset's `permission_classes`, `get_queryset` scoping and serializer fields as if each verb were a handler.
 - **Enforcement:** Django `@login_required`, `LoginRequiredMixin`, `@permission_required`; DRF `permission_classes` (the project default `DEFAULT_PERMISSION_CLASSES` is `AllowAny` unless configured) and `get_queryset` scoping; FastAPI `Depends(...)` on routes or routers; Flask `before_request` and decorators.
 - **Object scoping:** `Model.objects.get(pk=pk)` in a view is a lead; scoped lookups such as `request.user.orders.get(pk=pk)` or a filtered `get_queryset` are the usual fix.
 
@@ -31,7 +31,7 @@ Covers Django, Django REST Framework, Flask and FastAPI/Starlette.
 ## Starting searches
 
 ```text
-Entry points: urlpatterns|path\(|@app\.route|@(app|router)\.(get|post|put|patch|delete)|ViewSet|APIView|@shared_task
+Entry points: urlpatterns|path\(|@app\.route|@(app|router)\.(get|post|put|patch|delete)|ViewSet|APIView|router\.register\(|@shared_task
 Enforcement: login_required|permission_classes|DEFAULT_PERMISSION_CLASSES|Depends\(|get_queryset|csrf_exempt
 Interpreters: \.raw\(|\.extra\(|RawSQL|text\(f|execute\(f|shell=True|os\.system|pickle|yaml\.load|unsafe_load|render_template_string|from_string|mark_safe
 Config: DEBUG|SECRET_KEY|ALLOWED_HOSTS|CORS_|USE_X_FORWARDED_HOST|ProxyFix

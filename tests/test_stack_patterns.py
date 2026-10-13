@@ -103,6 +103,25 @@ class StartingSearchesMatchTheirIdiom(unittest.TestCase):
                     )
 
 
+# Generated CRUD resources have no handler code to read, so their registration line
+# is the only place an audit can find them. Each line must surface as an entry point.
+GENERATED_RESOURCE_REGISTRATIONS: dict[str, str] = {
+    "references/stacks/javascript-node.md": "finale.resource({ model: ProductModel, endpoints: ['/api/Products', '/api/Products/:id'] })",
+    "references/stacks/java-kotlin.md": '@RepositoryRestResource(path = "orders", collectionResourceRel = "orders")',
+    "references/stacks/python.md": 'router.register(r"orders", OrdersAPI, basename="orders")',
+    "references/stacks/ruby.md": "resources :orders, only: [:index, :show, :update]",
+    "references/stacks/php.md": "Route::resource('orders', OrderController::class);",
+}
+
+
+class GeneratedResourceRegistrationsAreEntryPoints(unittest.TestCase):
+    def test_each_registration_idiom_matches_the_entry_points_pattern(self) -> None:
+        for rel, sample in GENERATED_RESOURCE_REGISTRATIONS.items():
+            pattern = dict(si.load_searches(SKILL / rel))["Entry points"]
+            with self.subTest(reference=rel):
+                self.assertTrue(re.search(pattern, sample), f"/{pattern}/ does not match {sample!r}")
+
+
 class StartingSearchesFindLeadsInTheEvalFixtures(unittest.TestCase):
     def test_every_detected_stack_in_every_fixture_yields_at_least_one_lead(self) -> None:
         checked: set[str] = set()

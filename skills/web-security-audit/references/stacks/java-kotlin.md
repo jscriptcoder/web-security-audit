@@ -4,7 +4,7 @@ Covers Spring Boot/MVC/WebFlux, Spring Security, Ktor, Jakarta EE, Micronaut and
 
 ## Entry points and enforcement
 
-- **Entry points:** `@RestController`, `@Controller`, `@RequestMapping`/`@GetMapping`/`@PostMapping`, `@RequestParam`, `@PathVariable`, `@RequestBody`, `@ModelAttribute`, `@RequestHeader`, `@CookieValue`, functional `RouterFunction`s, `@MessageMapping` (STOMP/WebSocket), `@KafkaListener`/`@RabbitListener`/`@JmsListener`, `@Scheduled`, `@SchemaMapping`/`@QueryMapping` (Spring for GraphQL), JAX-RS `@Path`, Ktor `routing { get/post(...) }`, `call.receive<T>()`, `call.parameters`.
+- **Entry points:** `@RestController`, `@Controller`, `@RepositoryRestResource` (Spring Data REST exports the repository as a full CRUD resource with no handler code; its only controls are the filter chain and `@PreAuthorize` on the repository methods), `@RequestMapping`/`@GetMapping`/`@PostMapping`, `@RequestParam`, `@PathVariable`, `@RequestBody`, `@ModelAttribute`, `@RequestHeader`, `@CookieValue`, functional `RouterFunction`s, `@MessageMapping` (STOMP/WebSocket), `@KafkaListener`/`@RabbitListener`/`@JmsListener`, `@Scheduled`, `@SchemaMapping`/`@QueryMapping` (Spring for GraphQL), JAX-RS `@Path`, Ktor `routing { get/post(...) }`, `call.receive<T>()`, `call.parameters`.
 - **Enforcement:** `SecurityFilterChain` beans and `authorizeHttpRequests` rule order, `permitAll()`, `web.ignoring()`, `@PreAuthorize`/`@PostAuthorize`/`@Secured` (no effect unless `@EnableMethodSecurity` or the older `@EnableGlobalMethodSecurity` is active), custom `HandlerInterceptor`s and filters, Ktor `authenticate("...") { }` blocks (routes outside them are public), JPA/Hibernate filters or repository methods that scope by tenant or owner.
 - **Path matching:** confirm security matchers and handler mappings interpret paths identically: trailing slashes, suffixes, encoded segments and `;` matrix parameters. A replaced `StrictHttpFirewall` (for example with `DefaultHttpFirewall`) widens the gap.
 
@@ -33,7 +33,7 @@ Covers Spring Boot/MVC/WebFlux, Spring Security, Ktor, Jakarta EE, Micronaut and
 ## Starting searches
 
 ```text
-Entry points: @(Rest)?Controller|@(Get|Post|Put|Delete|Patch|Request)Mapping|@MessageMapping|@SchemaMapping|routing \{|call\.receive
+Entry points: @(Rest)?Controller|@(Get|Post|Put|Delete|Patch|Request)Mapping|@MessageMapping|@SchemaMapping|@RepositoryRestResource|routing \{|call\.receive
 Enforcement: SecurityFilterChain|authorizeHttpRequests|permitAll|web\.ignoring|@PreAuthorize|@Secured|EnableMethodSecurity|authenticate\(
 Interpreters: createNativeQuery|createQuery\(|JdbcTemplate|\$\{|ProcessBuilder|Runtime\.getRuntime|ObjectInputStream|activateDefaultTyping|JsonTypeInfo|SpelExpressionParser|new Yaml\(
 Parsers/outbound: DocumentBuilderFactory|SAXParserFactory|XMLInputFactory|RestTemplate|WebClient|HttpClient|openConnection|openStream

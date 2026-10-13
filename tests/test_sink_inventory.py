@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from dataclasses import asdict
 from pathlib import Path
 
 # The tests stay out of the skill folder so installers do not ship them.
@@ -286,6 +287,49 @@ class Cli(unittest.TestCase):
             self.assertEqual(data["searched_stacks"], ["frontend", "javascript-node"])
             self.assertTrue(data["note"])
             self.assertIn("page.js", {lead["path"] for lead in data["leads"]})
+
+
+class HandlerGroups(unittest.TestCase):
+    """Entry-point leads are summarised by directory so a whole handler package cannot drop out of the review unnoticed."""
+
+    def test_entry_point_leads_are_grouped_by_directory_with_file_and_lead_counts(self) -> None:
+        leads = [
+            si.Lead("java-kotlin", "Entry points", "src/orders/OrderController.java", 12, "@GetMapping"),
+            si.Lead("java-kotlin", "Entry points", "src/orders/OrderController.java", 20, "@PostMapping"),
+            si.Lead("java-kotlin", "Entry points", "src/orders/ExportController.java", 9, "@GetMapping"),
+            si.Lead("java-kotlin", "Entry points", "src/files/UploadController.java", 15, "@PostMapping"),
+            si.Lead("java-kotlin", "Interpreters", "src/jobs/Cleanup.java", 30, "createNativeQuery"),
+            si.Lead("java-kotlin", "Entry points", "Root.java", 3, "@RestController"),
+        ]
+        self.assertEqual(
+            [asdict(group) for group in si.handler_groups(leads)],
+            [
+                {"directory": ".", "files": 1, "leads": 1},
+                {"directory": "src/files", "files": 1, "leads": 1},
+                {"directory": "src/orders", "files": 2, "leads": 3},
+            ],
+        )
+
+    def test_markdown_lists_handler_groups_before_the_leads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "go.mod", "module example\n")
+            write(root, "api/orders.go", 'mux.HandleFunc("/orders", list)\nmux.HandleFunc("/orders/", get)\n')
+            write(root, "api/users.go", 'mux.HandleFunc("/users", users)\n')
+            write(root, "jobs/run.go", 'cmd := exec.Command("sh", "-c", c)\n')
+            text = Cli().run_cli(str(root))
+            self.assertIn("## Handler groups (1)", text)
+            self.assertIn("| api | 2 | 3 |", text)
+            self.assertNotIn("| jobs |", text)
+            self.assertLess(text.index("## Handler groups"), text.index("## go: Entry points"))
+
+    def test_json_output_lists_handler_groups(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, "go.mod", "module example\n")
+            write(root, "api/orders.go", 'mux.HandleFunc("/orders", list)\n')
+            data = json.loads(Cli().run_cli(str(root), "--json"))
+            self.assertEqual(data["handler_groups"], [{"directory": "api", "files": 1, "leads": 1}])
 
 
 if __name__ == "__main__":

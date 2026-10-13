@@ -43,6 +43,14 @@ Rows follow the resource groups in SKILL.md so each block can be completed with 
 
 Omitted scope (excluded dimensions such as runtime testing, the other side of a partial-stack review, or surfaces outside a focused review): [value]
 
+## Handler groups
+
+One row per directory, route file or generated resource registration that exposes entry points (the sink inventory prints the directories). A group is `reviewed` only when every handler in it has been read; the topic rows above cannot show that a whole group was skipped.
+
+| Handler group | Entry points | Status | Evidence/reason |
+| --- | --- | --- | --- |
+| [path or registration] | [count] | not-reviewed | |
+
 ## Supplemental platform checks
 
 | Check | Source status | Runtime status | Evidence/reason |

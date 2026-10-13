@@ -80,6 +80,29 @@ class Lead:
     excerpt: str
 
 
+@dataclass(frozen=True)
+class HandlerGroup:
+    directory: str
+    files: int
+    leads: int
+
+
+ENTRY_POINTS = "Entry points"
+
+
+def handler_groups(leads: Iterable[Lead]) -> list[HandlerGroup]:
+    """Summarise the entry-point leads by directory: the handler groups a review has to tick off one by one."""
+    files: dict[str, set[str]] = {}
+    counts: Counter[str] = Counter()
+    for lead in leads:
+        if lead.category != ENTRY_POINTS:
+            continue
+        directory = PurePosixPath(lead.path).parent.as_posix()
+        files.setdefault(directory, set()).add(lead.path)
+        counts[directory] += 1
+    return [HandlerGroup(directory, len(files[directory]), counts[directory]) for directory in sorted(files)]
+
+
 def _dependencies(package_json: Path) -> set[str]:
     try:
         data = json.loads(package_json.read_text(encoding="utf-8"))
@@ -271,6 +294,18 @@ def render_markdown(root: Path, stacks: list[str], leads: list[Lead], errors: li
         counts = Counter(PurePosixPath(rel).name for rel in skipped)
         lines.append("Skipped directories: " + ", ".join(f"`{name}` ({count})" for name, count in sorted(counts.items())))
     lines += ["", "Leads are places to read, not findings. Judge each against the matching reference.", ""]
+    handlers = handler_groups(leads)
+    if handlers:
+        lines += [
+            f"## Handler groups ({len(handlers)})",
+            "",
+            "Directories holding entry-point leads. Carry every row into the surface map and mark it reviewed only when each handler in it has been read.",
+            "",
+            "| Directory | Files | Entry-point leads |",
+            "| --- | --- | --- |",
+        ]
+        lines += [f"| {group.directory} | {group.files} | {group.leads} |" for group in handlers]
+        lines.append("")
     groups: dict[tuple[str, str], list[Lead]] = {}
     for lead in leads:
         groups.setdefault((lead.stack, lead.category), []).append(lead)
@@ -318,7 +353,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     leads, errors = inventory(root, effective, files)
 
     if args.json:
-        print(json.dumps({"root": str(root), "stacks": stacks, "searched_stacks": effective, "note": note, "leads": [asdict(lead) for lead in leads], "errors": errors, "skipped": skipped}, indent=2))
+        print(json.dumps({"root": str(root), "stacks": stacks, "searched_stacks": effective, "note": note, "handler_groups": [asdict(group) for group in handler_groups(leads)], "leads": [asdict(lead) for lead in leads], "errors": errors, "skipped": skipped}, indent=2))
     else:
         print(render_markdown(root, stacks, leads, errors, note, skipped))
     return 0

@@ -4,7 +4,7 @@ Covers Ruby on Rails, with notes that also apply to Sinatra and Rack application
 
 ## Entry points and enforcement
 
-- **Entry points:** `config/routes.rb`, controller actions and `params`, ActionCable channels, ActiveJob/Sidekiq jobs, Rake tasks, Rack middleware.
+- **Entry points:** `config/routes.rb`, controller actions and `params`, ActionCable channels, ActiveJob/Sidekiq jobs, Rake tasks, Rack middleware. A `resources :orders` line maps seven actions; check which the controller defines, which `only:`/`except:` removes, and that each defined action scopes its lookup (`current_user.orders.find`) rather than `Order.find`.
 - **Enforcement:** `before_action :authenticate_user!` and `skip_before_action`, Pundit `authorize`/`policy_scope` with `after_action :verify_authorized`, CanCanCan `load_and_authorize_resource`. `Model.find(params[:id])` is a lead; `current_user.models.find(params[:id])` or a policy scope is the usual fix.
 
 ## Topic leads
@@ -29,7 +29,7 @@ Covers Ruby on Rails, with notes that also apply to Sinatra and Rack application
 ## Starting searches
 
 ```text
-Entry points: routes\.rb|params\[|params\.permit|ActionCable|perform\(
+Entry points: routes\.rb|resources? :|params\[|params\.permit|ActionCable|perform\(
 Enforcement: before_action|skip_before_action|authorize|policy_scope|load_and_authorize_resource
 Interpreters: find_by_sql|where\(".*#\{|order\(params|Arel\.sql|Marshal\.load|YAML\.(unsafe_)?load|ERB\.new|render inline|html_safe|raw\(|`|%x\(|IO\.popen|open\(
 ```
