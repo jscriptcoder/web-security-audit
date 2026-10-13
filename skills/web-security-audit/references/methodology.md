@@ -66,6 +66,11 @@ Two cheap comparisons catch the omissions that a sink search misses, because not
 
 **Sibling handlers.** Group handlers that act on the same resource (create, read, update, delete, list, export; the REST route, the GraphQL resolver and the Server Action for the same object) and compare the controls each one applies: authentication, ownership or tenant scope in the query, field allowlists, rate limits, CSRF or origin checks. The one that drops a control its siblings apply is the lead; `updateAddress` scoping by `userId` while `deleteAddress` deletes by `id` alone is the pattern. The same comparison across route groups finds the route registered outside the authenticated group or before the middleware.
 
+Two omissions slip through that comparison unless they are asked for directly, because the handler that has them looks complete on its own:
+
+- **Scope of the data-access call.** For each repository or query call a handler makes, name the owner, tenant or principal it carries. A call that carries none (`deleteAll()`, `findAll()`, a `destroy` with an empty `where`, a `DELETE FROM` with no `WHERE`) behind an endpoint whose siblings filter by the caller is a repository-wide operation exposed to every user, however per-user the route looks. The sink inventory lists these calls under `Bulk operations`; read each against the sibling that scopes.
+- **Derivation of the identity.** Wherever the principal's identifier is transformed before it is used as a key (a prefix stripped, a substring, a split on a delimiter, lowercased, trimmed, looked up through a second table), compare the transformation with what registration and login accept. If an attacker can register a name that the transformation maps onto another account, every write keyed by the derived name lands on the victim.
+
 ## Essential skills
 
 Source: [PortSwigger Essential skills](https://portswigger.net/web-security/essential-skills).

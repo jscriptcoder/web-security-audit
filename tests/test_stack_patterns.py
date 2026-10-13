@@ -23,17 +23,20 @@ import sink_inventory as si  # noqa: E402
 SAMPLES: dict[str, dict[str, str]] = {
     "references/stacks/dotnet.md": {
         "Entry points": '[HttpGet("{id}")]',
+        "Bulk operations": "_db.Messages.RemoveRange(_db.Messages);",
         "Enforcement": '[Authorize(Roles = "Admin")]',
         "Interpreters": 'var orders = db.Orders.FromSqlRaw($"SELECT * FROM Orders WHERE Id = {id}");',
         "Config": "app.UseDeveloperExceptionPage();",
     },
     "references/stacks/go.md": {
         "Entry points": 'mux.HandleFunc("/notes", h.list)',
+        "Bulk operations": '_, err := db.Exec("DELETE FROM notes")',
         "Interpreters": 'cmd := exec.Command("pandoc", "-f", "markdown")',
         "Outbound/config": "resp, err := http.Get(target)",
     },
     "references/stacks/java-kotlin.md": {
         "Entry points": '@GetMapping("/orders/{id}")',
+        "Bulk operations": "mailboxRepository.deleteAll();",
         "Enforcement": '@PreAuthorize("hasRole(\'ADMIN\')")',
         "Interpreters": 'em.createNativeQuery("SELECT * FROM orders WHERE id = " + id)',
         "Parsers/outbound": "val factory = DocumentBuilderFactory.newInstance()",
@@ -41,23 +44,27 @@ SAMPLES: dict[str, dict[str, str]] = {
     },
     "references/stacks/javascript-node.md": {
         "Entry points": "app.get('/orders/:id', async (req, res) => {",
+        "Bulk operations": "await FeedbackModel.destroy({ where: {} })",
         "Interpreters": 'const rows = await prisma.$queryRawUnsafe("SELECT * FROM orders WHERE id = " + id)',
         "Data flow": "const { role } = req.body;",
         "Outbound/config": "app.set('trust proxy', true)",
     },
     "references/stacks/php.md": {
         "Entry points": "$id = $_GET['id'];",
+        "Bulk operations": "Message::query()->delete();",
         "Interpreters": '$rows = DB::raw("SELECT * FROM users WHERE id = $id");',
         "Config/data": "protected $guarded = [];",
     },
     "references/stacks/python.md": {
         "Entry points": '@router.get("/invoices/{invoice_id}")',
+        "Bulk operations": "Message.objects.all().delete()",
         "Enforcement": "user: User = Depends(current_user)",
         "Interpreters": "cursor.execute(f\"SELECT * FROM invoices WHERE owner = '{name}'\")",
         "Config": "DEBUG = True",
     },
     "references/stacks/ruby.md": {
         "Entry points": "user = User.find(params[:id])",
+        "Bulk operations": "Message.delete_all",
         "Enforcement": "before_action :authenticate_user!",
         "Interpreters": 'Order.where("name LIKE \'%#{params[:q]}%\'")',
     },

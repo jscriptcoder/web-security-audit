@@ -29,6 +29,7 @@ Covers `net/http` and routers/frameworks such as chi, gin, echo and fiber.
 
 ```text
 Entry points: HandleFunc|\.Handle\(|\.(GET|POST|PUT|PATCH|DELETE)\(|\.Group\(|Upgrader
+Bulk operations: Exec\("(DELETE FROM|TRUNCATE|UPDATE) \w+"\)|\.Delete\(&\w+\{\}\)|AllowGlobalUpdate
 Interpreters: Sprintf\(.*(SELECT|INSERT|UPDATE|DELETE|WHERE)|\.Raw\(|\.Order\(|text/template|template\.(HTML|JS|URL)|exec\.Command
 Outbound/config: http\.Get|NewRequest|net/http/pprof|expvar|AllowOriginFunc|ParseUnverified|X-Forwarded-Host
 ```

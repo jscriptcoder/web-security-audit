@@ -30,6 +30,7 @@ Covers ASP.NET Core MVC, Razor Pages, minimal APIs, Blazor and legacy ASP.NET on
 
 ```text
 Entry points: \[Http(Get|Post|Put|Patch|Delete)|Map(Get|Post|Put|Patch|Delete)\(|OnPost|: Hub\b
+Bulk operations: RemoveRange\(|ExecuteDelete\(|ExecuteUpdate\(|TRUNCATE TABLE
 Enforcement: \[Authorize|AllowAnonymous|FallbackPolicy|RequireAuthorization|AuthorizeAsync|IgnoreQueryFilters
 Interpreters: FromSqlRaw|ExecuteSqlRaw|SqlCommand|BinaryFormatter|TypeNameHandling|LosFormatter|Html\.Raw|MarkupString|Process\.Start
 Config: UseDeveloperExceptionPage|ForwardedHeaders|AllowedHosts|SetIsOriginAllowed|TokenValidationParameters

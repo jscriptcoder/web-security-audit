@@ -30,6 +30,7 @@ Covers Ruby on Rails, with notes that also apply to Sinatra and Rack application
 
 ```text
 Entry points: routes\.rb|resources? :|params\[|params\.permit|ActionCable|perform\(
+Bulk operations: \.(delete_all|destroy_all|update_all)\b
 Enforcement: before_action|skip_before_action|authorize|policy_scope|load_and_authorize_resource
 Interpreters: find_by_sql|where\(".*#\{|order\(params|Arel\.sql|Marshal\.load|YAML\.(unsafe_)?load|ERB\.new|render inline|html_safe|raw\(|`|%x\(|IO\.popen|open\(
 ```

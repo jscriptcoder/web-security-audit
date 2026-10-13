@@ -32,6 +32,7 @@ Covers Django, Django REST Framework, Flask and FastAPI/Starlette.
 
 ```text
 Entry points: urlpatterns|path\(|@app\.route|@(app|router)\.(get|post|put|patch|delete)|ViewSet|APIView|router\.register\(|@shared_task
+Bulk operations: \.objects\.all\(\)\.(delete|update)\(|session\.query\(\w+\)\.(delete|update)\(|\.delete\(synchronize_session
 Enforcement: login_required|permission_classes|DEFAULT_PERMISSION_CLASSES|Depends\(|get_queryset|csrf_exempt
 Interpreters: \.raw\(|\.extra\(|RawSQL|text\(f|execute\(f|shell=True|os\.system|pickle|yaml\.load|unsafe_load|render_template_string|from_string|mark_safe
 Config: DEBUG|SECRET_KEY|ALLOWED_HOSTS|CORS_|USE_X_FORWARDED_HOST|ProxyFix

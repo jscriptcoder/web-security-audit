@@ -31,6 +31,7 @@ Covers plain PHP, Laravel and Symfony.
 
 ```text
 Entry points: \$_(GET|POST|REQUEST|COOKIE|FILES|SERVER)|php://input|Route::|#\[Route
+Bulk operations: ::query\(\)->(delete|update)\(|::truncate\(|DB::table\([^)]*\)->(delete|update|truncate)\(
 Interpreters: DB::raw|whereRaw|orderByRaw|->query\(|system\(|shell_exec|passthru|proc_open|unserialize|createTemplate|\{!!|\|raw
 Config/data: \$guarded|->all\(\)|APP_DEBUG|TrustProxies|trusted_|==\s*\$|include\s*\(?\$
 ```

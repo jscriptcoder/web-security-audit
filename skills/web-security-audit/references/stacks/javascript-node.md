@@ -33,6 +33,7 @@ Covers Node.js with Express, NestJS, Fastify, Koa and Hapi, plus Deno and Bun. M
 
 ```text
 Entry points: app\.(get|post|put|patch|delete|use)|router\.|@(Controller|Get|Post|Put|Patch|Delete)\(|resolvers|on\(['"]message|(finale|epilogue)\.resource\(
+Bulk operations: \.destroy\(\s*\{\s*(where:\s*\{\s*\}|truncate)|\.(deleteMany|updateMany)\(\s*(\{\s*\})?\s*[,)]|\.truncate\(
 Interpreters: \$queryRawUnsafe|\.raw\(|whereRaw|sequelize\.query|child_process|exec\(|eval\(|new Function|vm\.run|\.compile\(|renderString
 Data flow: req\.(body|query|params)|merge\(|_\.set|defaultsDeep|\$where|\$regex
 Outbound/config: fetch\(|axios|got\(|trust proxy|cors\(|jwt\.(decode|verify)|session\(

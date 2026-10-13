@@ -34,6 +34,7 @@ Covers Spring Boot/MVC/WebFlux, Spring Security, Ktor, Jakarta EE, Micronaut and
 
 ```text
 Entry points: @(Rest)?Controller|@(Get|Post|Put|Delete|Patch|Request)Mapping|@MessageMapping|@SchemaMapping|@RepositoryRestResource|routing \{|call\.receive
+Bulk operations: \.(deleteAll|deleteAllInBatch|truncate)\(|createQuery\("(DELETE|UPDATE) \w+"\)
 Enforcement: SecurityFilterChain|authorizeHttpRequests|permitAll|web\.ignoring|@PreAuthorize|@Secured|EnableMethodSecurity|authenticate\(
 Interpreters: createNativeQuery|createQuery\(|JdbcTemplate|\$\{|ProcessBuilder|Runtime\.getRuntime|ObjectInputStream|activateDefaultTyping|JsonTypeInfo|SpelExpressionParser|new Yaml\(
 Parsers/outbound: DocumentBuilderFactory|SAXParserFactory|XMLInputFactory|RestTemplate|WebClient|HttpClient|openConnection|openStream

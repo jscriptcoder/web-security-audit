@@ -55,7 +55,7 @@ One row per directory, route file or generated resource registration that expose
 
 | Check | Source status | Runtime status | Evidence/reason |
 | --- | --- | --- | --- |
-| Declared security fields versus enforcement; sibling handlers compared | not-reviewed | not-reviewed | |
+| Declared security fields versus enforcement; sibling handlers compared, including the scope each data-access call carries and any transformation of the principal's identifier | not-reviewed | not-reviewed | |
 | Credentials and cryptography (password hashing, token generation, comparisons, encryption) | not-reviewed | not-reviewed | |
 | SAML / enterprise SSO | not-reviewed | not-reviewed | |
 | Server-side open redirects | not-reviewed | not-reviewed | |
