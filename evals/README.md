@@ -22,6 +22,8 @@ Without tooling: give each prompt to an agent with the skill installed, save the
 
 ## Results so far
 
+The [2026-10-14 review handoff](handoffs/2026-10-14-review.md) records verified inventory and scrubber issues, an Actuator rubric correction to make, proposed fixes with acceptance checks, and an incomplete fresh comparison. Only the Juice Shop baseline finished, so that review does not establish a skill effect or add a comparable paired result to the table below.
+
 Each eval was run with the skill and without it (same model, same prompt), and the reports were graded against `evals.json`. Treat these as small samples, not benchmarks.
 
 | Eval | Model | With skill | Without skill | Runs per config |
