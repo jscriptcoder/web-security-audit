@@ -22,9 +22,9 @@ Without tooling: give each prompt to an agent with the skill installed, save the
 
 ## Results so far
 
-The [2026-10-14 review handoff](handoffs/2026-10-14-review.md) records verified inventory and scrubber issues, an Actuator rubric correction to make, proposed fixes with acceptance checks, and an incomplete fresh comparison. Only the Juice Shop baseline finished, so that review does not establish a skill effect or add a comparable paired result to the table below.
+The [2026-10-14 GPT 6 Astra review handoff](handoffs/2026-10-14-review.md) records verified inventory and scrubber issues, an Actuator rubric correction to make, proposed fixes with acceptance checks, and an incomplete fresh comparison. Only the Juice Shop baseline finished; the interrupted runs are listed below but do not establish a skill effect.
 
-Each eval was run with the skill and without it (same model, same prompt), and the reports were graded against `evals.json`. Treat these as small samples, not benchmarks.
+Paired runs used the same model and prompt with and without the skill. Fixture reports were graded against `evals.json`; Juice Shop and WebGoat reports used their respective rubrics. Unpaired reruns and interrupted attempts are marked explicitly. Treat these as small samples, not benchmarks.
 
 | Eval | Model | With skill | Without skill | Runs per config |
 | --- | --- | --- | --- | --- |
@@ -45,6 +45,10 @@ Each eval was run with the skill and without it (same model, same prompt), and t
 | `webgoat` | Fable 5.1, skill with the sibling omission checks and `Bulk operations` leads (2026-10-13) | platform 10.5/12, challenges 7/7, lessons 33/34, calibration 6/6 | not rerun | 1 |
 | `webgoat` | Fable 5.1, skill with the Java XSS and file leads and the comment-is-not-a-control bullet (2026-10-13) | platform 7.5/12, challenges 7/7, lessons 33/34, calibration 6/6 | not rerun | 1 |
 | `webgoat` | Fable 5.1, same skill state, second run (2026-10-13; delegated the lesson inventory, cost not comparable) | platform 10.5/12, challenges 6.5/7, lessons 29.5/34, calibration 6/6 | not rerun | 2 with the previous row |
+| `juice-shop` (incomplete comparison) | GPT 6 Astra (2026-10-14) | interrupted by usage limits; ungraded | 35/40 (conservative; see note below) | 0 with / 1 without completed |
+| `webgoat` (incomplete comparison) | GPT 6 Astra (2026-10-14) | interrupted by usage limits; ungraded | interrupted by usage limits; ungraded | 0 completed per config |
+
+**GPT 6 Astra attribution and limits.** The user supplied the session model name after the review; exact execution model identifiers and settings were not captured. The Juice Shop baseline was manually graded 35/40, or 36/40 if the borderline TOTP disclosure/storage match is accepted. These runs used new common prompts and existing scrubbed copies with unresolved historical provenance, so they are not directly comparable with the earlier scores. The selected WebGoat source checks were not blind and received no score. See the [handoff](handoffs/2026-10-14-review.md) for grading decisions, evidence and incomplete-run details.
 
 What the runs show:
 
