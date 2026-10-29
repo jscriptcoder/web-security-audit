@@ -1,0 +1,486 @@
+{
+  "expectations": [
+    {
+      "id": "1",
+      "text": "SQL injection in login (string-built query)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F01: routes/login.ts:33 'interpolates req.body.email into a SQL literal'; result controls account selection/token issuance."
+    },
+    {
+      "id": "2",
+      "text": "SQL injection in product search",
+      "passed": true,
+      "score": 1,
+      "evidence": "F02: routes/search.ts:20-22 inserts q into LIKE expressions and returns query results; explicitly identifies SQL injection and database disclosure."
+    },
+    {
+      "id": "3",
+      "text": "NoSQL injection in review update (operator/$where injection)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F15: routes/updateProductReviews.ts:16-19 uses untyped body id in a multi:true query; 'an operator-shaped ID can broaden the query'. Runtime operator support is appropriately qualified."
+    },
+    {
+      "id": "4",
+      "text": "NoSQL injection in order tracking",
+      "passed": true,
+      "score": 1,
+      "evidence": "F16: routes/trackOrder.ts:15-18 inserts a URL ID into a quoted $where JavaScript expression; predicate manipulation can select extra orders."
+    },
+    {
+      "id": "5",
+      "text": "NoSQL $where sleep / injection in review listing",
+      "passed": true,
+      "score": 1,
+      "evidence": "F16: routes/showProductReviews.ts:31-36 concatenates ID into $where and :17-25 installs blocking sleep; identifies predicate manipulation and CPU blocking."
+    },
+    {
+      "id": "6",
+      "text": "SSTI / code execution via username rendered in pug template",
+      "passed": true,
+      "score": 1,
+      "evidence": "F22: routes/userProfile.ts:57-65 extracts #{...} code from username, calls eval, and inserts result into Pug source before compilation at :90."
+    },
+    {
+      "id": "7",
+      "text": "Sandboxed eval of B2B order payload (RCE / DoS)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F29: routes/b2bOrder.ts:18-32 evaluates caller code through notevil with a two-second timeout; repeated expensive expressions can block event loop. No unsupported sandbox escape claimed."
+    },
+    {
+      "id": "8",
+      "text": "YAML parsing of uploads (yaml bomb)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F29: routes/fileUpload.ts:103-127 calls JSON.stringify(yaml.load(data)); explicitly identifies nested/aliased document expansion, memory and event-loop exhaustion."
+    },
+    {
+      "id": "9",
+      "text": "XXE in XML upload (noent)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F26: routes/fileUpload.ts:77-83 sends uploaded XML to lib/xml.ts:19-35 with filesystem providers and NOENT/DTDLOAD; process-readable entity content can enter error response."
+    },
+    {
+      "id": "10",
+      "text": "Zip slip in zip upload handling",
+      "passed": true,
+      "score": 1,
+      "evidence": "F25: routes/fileUpload.ts:27-35 checks project-path substring then writes archive-controlled path under uploads/complaints; parent segments escape intended root."
+    },
+    {
+      "id": "11",
+      "text": "Upload size/type enforced client-side or after processing",
+      "passed": false,
+      "score": 0,
+      "evidence": "F28 identifies a different uploadToDisk memory-upload route lacking size limits. F45 cites fileUpload.ts:62-68 for arbitrary MIME labels in metrics, but does not identify complaint size/type validation as pass-through bookkeeping, the 100000-vs-200000 limit mismatch, or client-side-only enforcement. Correct general upload concerns are present, but the specified root cause is not established. Borderline broader-class interpretation recorded separately."
+    },
+    {
+      "id": "12",
+      "text": "Mass assignment on user registration (role, etc.)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F10: server.ts registration does not allowlist fields, verify.ts:52-56 passes through, and models/user.ts:76-95 persists privileged roles; login signs supplied role."
+    },
+    {
+      "id": "13",
+      "text": "Weak server-side registration validation (empty email/password, repeat check client-only)",
+      "passed": false,
+      "score": 0,
+      "evidence": "F10 covers role mass assignment, not missing email/password validity or server-side repeat validation. No finding names empty registration or client-only password-repeat enforcement."
+    },
+    {
+      "id": "14",
+      "text": "Negative quantity / price manipulation in basket & order",
+      "passed": true,
+      "score": 1,
+      "evidence": "F31: basketItems.ts:87-101 checks only upper bounds; basketitem model lacks positive constraint; order.ts subtracts negative inventory quantities and multiplies them into price/wallet totals."
+    },
+    {
+      "id": "15",
+      "text": "Deluxe membership payment bypass",
+      "passed": true,
+      "score": 1,
+      "evidence": "F32: routes/deluxe.ts:24-40 tests only wallet/card strings; other paymentMode values fall through to role upgrade/token issuance."
+    },
+    {
+      "id": "16",
+      "text": "Coupon codes forgeable (z85, no secret) / expiry not enforced",
+      "passed": true,
+      "score": 1,
+      "evidence": "F30: lib/insecurity.ts:97-118 uses unsigned Z85 month/discount; coupon/order handlers apply it; alternative campaign trusts caller timestamp instead of server date."
+    },
+    {
+      "id": "17",
+      "text": "Null byte / path filter bypass and directory listing on /ftp",
+      "passed": true,
+      "score": 1,
+      "evidence": "F37: fileServer.ts checks suffix then truncates literal %00, allowing backup.ext%00.pdf to target backup.ext. F36 identifies public FTP directory index at server.ts:288-303."
+    },
+    {
+      "id": "18",
+      "text": "Access logs served publicly",
+      "passed": true,
+      "score": 1,
+      "evidence": "F08/F36: server.ts:301-303 publicly serves support logs; combined logging at :364 retains password-change URLs."
+    },
+    {
+      "id": "19",
+      "text": "Admin area guarded only client-side / admin REST without role check",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11: frontend AdminGuard cannot protect HTTP; generated user listing and administrative operations use generic auth without roles."
+    },
+    {
+      "id": "20",
+      "text": "Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11 identifies generic-auth Feedback DELETE without role restriction; F12 identifies body-controlled UserId on public Feedback POST; F38 identifies reusable exposed CAPTCHA answers. Zero-star case not discussed, but several mechanisms in this grouped root are established."
+    },
+    {
+      "id": "21",
+      "text": "Basket read by ID without ownership check",
+      "passed": true,
+      "score": 1,
+      "evidence": "F13: routes/basket.ts:18-19 reads URL ID after authentication without proving owner."
+    },
+    {
+      "id": "22",
+      "text": "Basket item add with BasketId from body / duplicate key parsing",
+      "passed": true,
+      "score": 1,
+      "evidence": "F14: utils.ts preserves duplicate keys; basketItems.ts authorizes first BasketId but persists last, permitting cross-user addition."
+    },
+    {
+      "id": "23",
+      "text": "Product review author taken from body / update without author check",
+      "passed": true,
+      "score": 1,
+      "evidence": "F15: createProductReviews.ts:23-28 stores body author; updateProductReviews.ts lacks author predicate, permitting cross-user edits."
+    },
+    {
+      "id": "24",
+      "text": "Product PUT allowed for non-admin",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11 and API matrix: server.ts:391-394 has product PUT authorization commented out; anonymous product updates are explicitly identified."
+    },
+    {
+      "id": "25",
+      "text": "CSRF on profile update (form POST accepted cross-origin, no token)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F24: updateUserProfile.ts cookie authentication, server.ts form-urlencoded support, absent CSRF/Origin rejection; qualifies modern SameSite restrictions."
+    },
+    {
+      "id": "26",
+      "text": "SSRF via profile image URL fetch",
+      "passed": true,
+      "score": 1,
+      "evidence": "F21: profileImageUrlUpload.ts:18-30 fetches arbitrary imageUrl without destination/redirect restrictions and saves response in public upload directory."
+    },
+    {
+      "id": "27",
+      "text": "Weak / hard-coded seed credentials and test accounts",
+      "passed": false,
+      "score": 0,
+      "evidence": "Seed-user datasets explicitly excluded; no weak/static seed or frontend test-account credential finding. F07 deterministic OAuth passwords is a different root cause."
+    },
+    {
+      "id": "28",
+      "text": "Password reset by security question, no rate limit, guessable answers",
+      "passed": true,
+      "score": 1,
+      "evidence": "F39: resetPassword.ts:35-46 relies on reusable knowledge answer; recovery-question enumeration and spoofable IP-based limiter described. It correctly acknowledges an IP limiter rather than literally claiming none; F36 additionally identifies exposed recovery-answer configuration."
+    },
+    {
+      "id": "29",
+      "text": "OAuth login derives password from base64(reversed email) client-side",
+      "passed": true,
+      "score": 1,
+      "evidence": "F07: oauth.component.ts:29-36 registers base64(reversed email) and :46-47 logs in with it; backend verifies no provider assertion."
+    },
+    {
+      "id": "30",
+      "text": "Change password skips current-password check when param absent (GET params)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F08: changePassword.ts:39 checks current password only if supplied and reads credentials from GET query at :14-17."
+    },
+    {
+      "id": "31",
+      "text": "TOTP secret stored in plaintext in users table",
+      "passed": false,
+      "score": 0,
+      "evidence": "F09 identifies readable totpSecret in complete UserModel fields and responses/JWTs, states exposed seeds compromise second factor, and calls for protected TOTP storage. It does not use the word plaintext or separately identify the database write, but identifies unprotected model-held seeds and their disclosure. Source models/user.ts defines a plain STRING without encryption. Broad semantic match recorded as ambiguous. Coordinator adjudication: retain the conservative distinction between seed disclosure and an explicit plaintext-at-rest root cause, equally for both reports. Source knowledge supplied by the grader cannot fill that report omission."
+    },
+    {
+      "id": "32",
+      "text": "Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys",
+      "passed": true,
+      "score": 1,
+      "evidence": "F06: lib/insecurity.ts:41 plain unsalted MD5 and :42 shared source HMAC key. F03 identifies source-embedded RSA private signing key."
+    },
+    {
+      "id": "33",
+      "text": "JWT: alg none / RSA public key confusion accepted, legacy express-jwt",
+      "passed": false,
+      "score": 0,
+      "evidence": "F04 lists old JWT libraries and missing algorithm allowlist but explicitly says acceptance of none or RSA/HMAC confusion is 'not independently established'. Different token-purpose flaws and known private key do not establish this root."
+    },
+    {
+      "id": "34",
+      "text": "Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F03 identifies hard-coded private key in lib/insecurity.ts and served Terraform; F36 identifies public encryptionkeys directory and key handlers. Source verification confirmed matching key material after normalizing source escapes. Specific premium/ctf keys not inspected; grouped root credit for exposed shipped key material."
+    },
+    {
+      "id": "35",
+      "text": "Prometheus /metrics unauthenticated",
+      "passed": true,
+      "score": 1,
+      "evidence": "F36 identifies anonymous /metrics at server.ts:696 and routes/metrics.ts, disclosing process and business metrics."
+    },
+    {
+      "id": "36",
+      "text": "Verbose error handler / stack traces in responses",
+      "passed": true,
+      "score": 1,
+      "evidence": "F36 identifies unconditional errorhandler() at server.ts:702 and developer details returned; formatting is explicitly dependency-qualified."
+    },
+    {
+      "id": "37",
+      "text": "XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL",
+      "passed": true,
+      "score": 1,
+      "evidence": "F18 traces search query and reflected orderId to bypassSecurityTrustHtml/innerHTML; F19 traces product/email/IP trust bypasses; F23 CSP interpolation; subtitle follow-up names raw VTT script injection. Sanitizer exploit is left unconfirmed. Multiple actual sinks satisfy this grouped root."
+    },
+    {
+      "id": "38",
+      "text": "Open redirect allowlist uses substring match",
+      "passed": false,
+      "score": 0,
+      "evidence": "No finding identifies isRedirectAllowed substring matching or open redirect. Reading redirect/security helpers in process/scope is not detection evidence."
+    },
+    {
+      "id": "39",
+      "text": "JSONP whoami callback leaks email cross-origin",
+      "passed": true,
+      "score": 1,
+      "evidence": "F24 identifies currentUser.ts:54-58 authenticated JSONP and cross-origin script reads when eligible cookies are sent; F09 describes unconstrained fields. Source confirms standard response includes email."
+    },
+    {
+      "id": "40",
+      "text": "Known-vulnerable / typosquatted dependencies pinned in manifests",
+      "passed": false,
+      "score": 0,
+      "evidence": "Additional observations explicitly leave dependency verification open and assert no vulnerability from version strings. No concrete vulnerable/typosquatted component finding is substantiated; outdated JWT pins alone do not establish this row."
+    }
+  ],
+  "summary": {
+    "passed": 33,
+    "failed": 7,
+    "total": 40,
+    "pass_rate": 0.825
+  },
+  "weighted_totals": {
+    "G": {
+      "score": 33,
+      "total": 40
+    }
+  },
+  "grading_scope": {
+    "report": "outputs/report.md",
+    "process": "outputs/process.md",
+    "source": "C:/Users/User/Projects/web-security-audit-workspace/juice-shop",
+    "method": "Independent complete report/process reading, with targeted static source adjudication only. No counterpart, existing grading.json, historical results, live tests, or delegation. Source/report unchanged.",
+    "rules": "40 binary core rows; nine separate binary bonuses. Broad grouped rows receive credit for an evidenced submechanism, not mere file inventory."
+  },
+  "ambiguities": [
+    {
+      "id": "11",
+      "score": 0,
+      "reason": "F28 has genuine missing upload limits but for memory uploads, while F45 refers to fileUpload.ts only for metrics MIME cardinality. Broad upload-class interpretation could award; strict complaint validation mechanism did not."
+    },
+    {
+      "id": "31",
+      "score": 1,
+      "reason": "F09 evidences unprotected model-held TOTP seeds/disclosure, but not explicit storage-write analysis or the word plaintext. Credited semantic mechanism; stricter explicit storage requirement could reject."
+    },
+    {
+      "id": "34",
+      "score": 1,
+      "reason": "Hard-coded signing material and public key directory covered; reward/ctf encryption specifics not. Rubric groups several secrets."
+    },
+    {
+      "id": "B5",
+      "score": 0,
+      "reason": "Wallet event attribution is different from contract/mint/sandbox mechanisms; broader NFT route interpretation could award."
+    },
+    {
+      "id": "B6",
+      "score": 1,
+      "reason": "IaC subcase detected through /infrastructure route, despite rubric description referring to client assets."
+    },
+    {
+      "id": "B8",
+      "score": 1,
+      "reason": "Same-origin active SVG publishing credited under 'or similar'; does not cover the precise delivery-address challenge."
+    }
+  ],
+  "false_positive_review": {
+    "confirmed_false_claims": [],
+    "confirmed_above_low_false_positives_found_in_checks": 0,
+    "exhaustive_verification": false,
+    "limits": "No verified false claim was found in the selected checks; this is not a statement that every claim is true or that the report has zero false positives. Not all 48 findings or dependency/generated-API/browser behavior were independently verified. No runtime, provider/model, parser, concurrency, deployed-state, or contract behavior tested.",
+    "checks": [
+      "F03: static key comparison initially required normalizing literal source escapes; underlying private-key base64 matches Terraform exactly. server.ts exposes infrastructure and only filters annotations; no values repeated.",
+      "F09: memory.ts joins UserModel without exclusion and serializes result; user model has no default secret scope and plain totpSecret field; server.ts public registration confirmed. Actual populated records not observed.",
+      "F17/B3: dataExport.ts masks email and selects orders with that lossy identity.",
+      "F21/B8: profileImageUrlUpload.ts accepts .svg, fetches arbitrary URL, and writes returned bytes into public upload location; browser execution remains conditional.",
+      "F24: currentUser.ts selects arbitrary fields and sends JSONP on callback; cross-site cookie eligibility remains conditional.",
+      "F27/B2: dataErasure.ts passes body/layout into res.render in gated and fallback branches; installed HBS resolution unverified.",
+      "F28: server.ts places uploadToDisk before authentication and disk Multer config has no size limit; actual exhaustion untested.",
+      "F33: wallet.ts increments balance from request after owned-card lookup only; payment integration absence confirmed within handler.",
+      "F40-F42: chat.ts decodes token without verification, compares masked emails, allows unrestricted numeric coupon tool, and streams tool-call input to all clients; model outcomes untested.",
+      "F43: request.interceptor.ts applies stored token/email without origin restriction; user.service.ts has external Google userinfo HttpClient request; actual CORS delivery unverified.",
+      "F47-F48: web3Wallet.ts inserts arbitrary request address in global Set before provider setup; nftMint.ts consumes global observed events by caller-supplied address. These support the report's bounded training-state/resource claims, not B5 contract weaknesses."
+    ]
+  },
+  "calibration": {
+    "assessment": "Strong source-versus-runtime qualification, explicit confidence labels, gate/platform conditions, attack prerequisites and bounded impacts. Report avoids equating CORS wildcard with credentialed access, known versions with proven CVEs, or template infrastructure with deployed infrastructure.",
+    "severity_overclaims": [],
+    "cautions": [
+      "F03/F09 Critical ratings assume real users/data and exploit consequences; training adaptation context is stated.",
+      "F27 labels High potential impact/medium confidence and explains dependency/file-read limits; unresolved acceptance is not a confirmed false positive.",
+      "F04 leaves alg-none/confusion unconfirmed; that is a coverage miss rather than a false claim."
+    ]
+  },
+  "coverage_statement": {
+    "present": true,
+    "evidence": "Final 'Reviewed scope and explicit exclusions' plus process ledger distinguish full reads, focused ranges, search-only and inventory-only. Excludes seeds, contracts, dependency implementations, deployment/runtime and many assets.",
+    "areas_named_as_reviewed": [
+      "server.ts/app.ts and manifests",
+      "lib/insecurity.ts, utils, XML and webhook helpers",
+      "models and relations",
+      "authentication/MFA/recovery",
+      "commerce/baskets/coupons/wallet/order",
+      "review queries and mutations",
+      "uploads/file/profile/template handlers",
+      "data export/erasure",
+      "chat/Web3 event handlers",
+      "metrics/configuration",
+      "selected frontend guards/services/templates and DOM sinks",
+      "Docker/Compose/Terraform/Vagrant"
+    ],
+    "process_evidence_limit": "Self-reported process log only; full execution transcript unavailable. Its claims of read operations, no runtime/external access, and 135 anchor checks are not independently proven by transcript."
+  },
+  "execution_metrics": {
+    "tool_calls": null,
+    "total_steps": null,
+    "token_usage": null,
+    "reason": "No full transcript or token telemetry supplied; not inferred from report size."
+  },
+  "timing": {
+    "self_reported_final_elapsed_seconds": 1354.5,
+    "self_reported_review_finished_elapsed_seconds": 1300.5,
+    "independently_verified": false
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Core rows 11, 31, 34 and bonus B5/B6/B8",
+        "reason": "Specify whether credit requires exact challenge mechanism/sink or a related vulnerability at an alternate sink. Broad grouped wording (especially 'or similar') permits materially different grades despite equivalent evidence."
+      },
+      {
+        "assertion": "Core rows 20 and 37",
+        "reason": "Multiple independent mechanisms share one binary row; one sink passes despite omitted variants. Preserve frozen score now, but future coverage reporting should separate submechanisms."
+      }
+    ],
+    "overall": "Rubric is usable but combines exact-root and broad-family rows. Explicit ambiguities are preserved for coordinator adjudication without consulting other grades."
+  },
+  "bonus": [
+    {
+      "id": "B1",
+      "text": "Race condition on review likes (routes/likeProductReviews.ts) — timingAttack",
+      "passed": true,
+      "score": 1,
+      "evidence": "F35: likeProductReviews.ts checks likedBy, increments count, waits 150ms, then writes voter array; parallel requests can repeat increment."
+    },
+    {
+      "id": "B2",
+      "text": "Local file read in data erasure layout param (routes/dataErasure.ts) — lfr",
+      "passed": true,
+      "score": 1,
+      "evidence": "F27: dataErasure.ts spreads caller body/layout into res.render, with a weak denylist; identifies local-file/template disclosure and 100-character gate limit. Source verifies both branches forward body."
+    },
+    {
+      "id": "B3",
+      "text": "Data export matching other users' data (routes/dataExport.ts) — dataExport",
+      "passed": true,
+      "score": 1,
+      "evidence": "F17: dataExport.ts:21-33 selects orders by vowel-masked email, allowing distinct valid emails to collide. Source verifies matching query."
+    },
+    {
+      "id": "B4",
+      "text": "Chatbot prompt injection / debug info to non-admins (routes/chat.ts) — chatbotPromptInjection, chatbotGreedyInjection, aiDebugging, systemPromptExtraction",
+      "passed": true,
+      "score": 1,
+      "evidence": "F41 identifies untrusted prompt/history and no server enforcement for coupon policy; F42 identifies tool-call traces streamed regardless of admin status. Source confirms tool schema and unconditional trace output. Successful model jailbreak not claimed."
+    },
+    {
+      "id": "B5",
+      "text": "Web3: reentrancy in wallet contract, NFT mint logic, sandbox route (routes/web3Wallet.ts, routes/nftMint.ts, data/static/web3-snippets) — web3Wallet, nftMint, web3Sandbox",
+      "passed": false,
+      "score": 0,
+      "evidence": "F47/F48 concern forged attribution of observed events and unbounded listener registration, not contract reentrancy, NFT mint authorization logic, or sandbox-route weakness. Contract implementations explicitly excluded. Broader interpretation of NFT logic is ambiguous but not credited."
+    },
+    {
+      "id": "B6",
+      "text": "Hidden routes reachable client-side (token sale, score board, privacy policy, IaC files under assets, extra language file, blueprint under public assets) — tokenSale, scoreBoard, misplacedIacFiles, extraLanguage, retrieveBlueprint",
+      "passed": true,
+      "score": 1,
+      "evidence": "F03 identifies anonymous infrastructure-file route server.ts:268-285 serving Terraform including key material. Credits the IaC-file exposure subcase; other listed hidden routes are not detected. Current source serves /infrastructure rather than assets."
+    },
+    {
+      "id": "B7",
+      "text": "Hashid-based continue code forgeable (routes/restoreProgress.ts) — continueCode",
+      "passed": false,
+      "score": 0,
+      "evidence": "Progress/restoration route bodies excluded and no Hashids/continue-code forgery finding."
+    },
+    {
+      "id": "B8",
+      "text": "SVG/HTML injection into delivery address or similar — svgInjection",
+      "passed": true,
+      "score": 1,
+      "evidence": "F21 explicitly identifies allowed .svg server fetch, publication under shop origin, and active SVG execution when opened as a document. Source confirms .svg allowance and public saved path. Credited under 'or similar'; no delivery-address injection is identified and strict challenge-specific interpretation could reject this match. Coordinator adjudication: credit the genuine active-SVG publication mechanism under the rubric's explicit \"or similar\" wording, equally for both reports. This does not credit the specific delivery-address challenge."
+    },
+    {
+      "id": "B9",
+      "text": "Missing output encoding of image filename — missingEncoding",
+      "passed": false,
+      "score": 0,
+      "evidence": "No image-filename output-encoding finding. Filename sanitization or upload MIME concerns do not identify this class."
+    }
+  ],
+  "bonus_summary": {
+    "score": 6,
+    "total": 9,
+    "passed": 6,
+    "failed": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "adjudication": {
+    "method": "Coordinator reconciled independent grades after both were saved. Raw independent grades are retained in grading-independent.json; initial baseline coordinator grade is also retained.",
+    "G11": "No credit in either report: the unbounded memory upload and metrics MIME-label issue are not the complaint-upload validation bypass.",
+    "G31": "No credit in either report for storage: usable-seed disclosure is established, but explicit plaintext-at-rest root cause is absent. Broader matching would add one core point to both.",
+    "B6": "Credit both for the public IaC-file subcase explicitly included in the bonus; no credit inferred for hidden frontend routes. This corrects the initial baseline coordinator exclusion.",
+    "B8": "Credit both for actual same-origin active-SVG publication under \"or similar\". Narrow delivery-address-only interpretation would subtract one bonus point from both.",
+    "effect": "Adjudication applies identical rules; core difference remains two points and bonus scores are tied."
+  }
+}

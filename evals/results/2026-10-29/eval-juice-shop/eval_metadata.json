@@ -1,0 +1,222 @@
+{
+  "skill_name": "web-security-audit",
+  "skill_revision": "9884636",
+  "executor_model": "Inherited parent session model; no override",
+  "mode": "source-only",
+  "runs_per_configuration": 1,
+  "timing_comparable": false,
+  "reason": "Fresh retry; no exact model identifier or token telemetry exposed.",
+  "historical_prompt_reproduced": true,
+  "isolation": "Fresh agent context, no rubric, answer-key, previous reports or other configuration outputs.",
+  "eval_id": 1,
+  "eval_name": "juice-shop",
+  "prompt": "Perform a thorough source-only security review of the OWASP Juice Shop application at C:\\Users\\User\\Projects\\web-security-audit-workspace\\juice-shop. Review frontend, backend, generated APIs, shared security and configuration. Report evidenced root causes with file/line anchors, bounded impact, remediation and regression checks; distinguish source proof from unverified runtime assumptions. Record reviewed and unreviewed scope. Do not start the application or test deployed services. Save a complete Markdown report, no arbitrary finding cap.",
+  "assertions": [
+    "1: SQL injection in login (string-built query) | routes/login.ts | loginAdmin, loginBender, loginJim, ephemeralAccountant, ghostLogin",
+    "2: SQL injection in product search | routes/search.ts | dbSchema, unionSqlInjection, christmasSpecial",
+    "3: NoSQL injection in review update (operator/$where injection) | routes/updateProductReviews.ts | noSqlReviews",
+    "4: NoSQL injection in order tracking | routes/trackOrder.ts | noSqlOrders",
+    "5: NoSQL $where sleep / injection in review listing | routes/showProductReviews.ts | noSqlCommand",
+    "6: SSTI / code execution via username rendered in pug template | routes/userProfile.ts | ssti",
+    "7: Sandboxed eval of B2B order payload (RCE / DoS) | routes/b2bOrder.ts | rce, rceOccupy",
+    "8: YAML parsing of uploads (yaml bomb) | routes/fileUpload.ts | yamlBomb",
+    "9: XXE in XML upload (noent) | routes/fileUpload.ts | xxeFileDisclosure, xxeDos",
+    "10: Zip slip in zip upload handling | routes/fileUpload.ts | fileWrite",
+    "11: Upload size/type enforced client-side or after processing | routes/fileUpload.ts, frontend | uploadSize, uploadType, deprecatedInterface",
+    "12: Mass assignment on user registration (role, etc.) | server.ts finale/REST, routes/verify.ts | registerAdmin",
+    "13: Weak server-side registration validation (empty email/password, repeat check client-only) | server.ts, frontend register | emptyUserRegistration, passwordRepeat",
+    "14: Negative quantity / price manipulation in basket & order | routes/basketItems.ts, routes/order.ts | negativeOrder",
+    "15: Deluxe membership payment bypass | routes/deluxe.ts | freeDeluxe",
+    "16: Coupon codes forgeable (z85, no secret) / expiry not enforced | lib/insecurity.ts, routes/order.ts, routes/coupon.ts | forgedCoupon, manipulateClock",
+    "17: Null byte / path filter bypass and directory listing on /ftp | routes/fileServer.ts, server.ts serveIndex | nullByte, directoryListing, forgottenBackup, forgottenDevBackup, misplacedSignatureFile",
+    "18: Access logs served publicly | server.ts (/support/logs) | accessLogDisclosure",
+    "19: Admin area guarded only client-side / admin REST without role check | frontend routes, server.ts | adminSection",
+    "20: Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse) | server.ts Feedback REST, routes/verify.ts, routes/captcha.ts | feedback, forgedFeedback, zeroStars, captchaBypass",
+    "21: Basket read by ID without ownership check | routes/basket.ts | basketAccess",
+    "22: Basket item add with BasketId from body / duplicate key parsing | routes/basketItems.ts | basketManipulate",
+    "23: Product review author taken from body / update without author check | routes/createProductReviews.ts, routes/updateProductReviews.ts | forgedReview",
+    "24: Product PUT allowed for non-admin | server.ts Products REST | changeProduct",
+    "25: CSRF on profile update (form POST accepted cross-origin, no token) | routes/updateUserProfile.ts | csrf",
+    "26: SSRF via profile image URL fetch | routes/profileImageUrlUpload.ts | ssrf",
+    "27: Weak / hard-coded seed credentials and test accounts | data/static/users.yml, frontend | weakPassword, exposedCredentials, loginSupport, loginAmy, loginRapper",
+    "28: Password reset by security question, no rate limit, guessable answers | routes/resetPassword.ts | resetPassword* (6), geoStalking*",
+    "29: OAuth login derives password from base64(reversed email) client-side | frontend oauth component, routes/login.ts | oauthUserPassword",
+    "30: Change password skips current-password check when param absent (GET params) | routes/changePassword.ts | changePasswordBender",
+    "31: TOTP secret stored in plaintext in users table | routes/2fa.ts, models/user.ts | twoFactorAuthUnsafeSecretStorage",
+    "32: Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys | lib/insecurity.ts | weirdCrypto, passwordHashLeak (hash returned by whoami/Users)",
+    "33: JWT: alg none / RSA public key confusion accepted, legacy express-jwt | lib/insecurity.ts, package.json | jwtUnsigned, jwtForged",
+    "34: Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key) | encryptionkeys/, lib/insecurity.ts, routes/premiumReward.ts, routes/easterEgg.ts | premiumPaywall, easterEggLevelTwo, nftUnlock (private key)",
+    "35: Prometheus /metrics unauthenticated | routes/metrics.ts, server.ts | exposedMetrics",
+    "36: Verbose error handler / stack traces in responses | server.ts errorhandler | errorHandling",
+    "37: XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL | frontend search/product/track-result/administration/last-login-ip, routes/saveLoginIp.ts, routes/videoHandler.ts, routes/userProfile.ts, package.json | localXss, xssBonus, reflectedXss, restfulXss, persistedXssUser, persistedXssFeedback, httpHeaderXss, videoXss, usernameXss",
+    "38: Open redirect allowlist uses substring match | lib/insecurity.ts isRedirectAllowed, routes/redirect.ts | redirect, redirectCryptoCurrency",
+    "39: JSONP whoami callback leaks email cross-origin | routes/currentUser.ts | emailLeak",
+    "40: Known-vulnerable / typosquatted dependencies pinned in manifests | package.json, frontend/package.json, Dockerfile | knownVulnerableComponent, typosquattingNpm, typosquattingAngular, supplyChainAttack, csaf, vulnerableDockerImage"
+  ],
+  "rubric_rows": [
+    {
+      "id": "1",
+      "text": "SQL injection in login (string-built query) | routes/login.ts | loginAdmin, loginBender, loginJim, ephemeralAccountant, ghostLogin"
+    },
+    {
+      "id": "2",
+      "text": "SQL injection in product search | routes/search.ts | dbSchema, unionSqlInjection, christmasSpecial"
+    },
+    {
+      "id": "3",
+      "text": "NoSQL injection in review update (operator/$where injection) | routes/updateProductReviews.ts | noSqlReviews"
+    },
+    {
+      "id": "4",
+      "text": "NoSQL injection in order tracking | routes/trackOrder.ts | noSqlOrders"
+    },
+    {
+      "id": "5",
+      "text": "NoSQL $where sleep / injection in review listing | routes/showProductReviews.ts | noSqlCommand"
+    },
+    {
+      "id": "6",
+      "text": "SSTI / code execution via username rendered in pug template | routes/userProfile.ts | ssti"
+    },
+    {
+      "id": "7",
+      "text": "Sandboxed eval of B2B order payload (RCE / DoS) | routes/b2bOrder.ts | rce, rceOccupy"
+    },
+    {
+      "id": "8",
+      "text": "YAML parsing of uploads (yaml bomb) | routes/fileUpload.ts | yamlBomb"
+    },
+    {
+      "id": "9",
+      "text": "XXE in XML upload (noent) | routes/fileUpload.ts | xxeFileDisclosure, xxeDos"
+    },
+    {
+      "id": "10",
+      "text": "Zip slip in zip upload handling | routes/fileUpload.ts | fileWrite"
+    },
+    {
+      "id": "11",
+      "text": "Upload size/type enforced client-side or after processing | routes/fileUpload.ts, frontend | uploadSize, uploadType, deprecatedInterface"
+    },
+    {
+      "id": "12",
+      "text": "Mass assignment on user registration (role, etc.) | server.ts finale/REST, routes/verify.ts | registerAdmin"
+    },
+    {
+      "id": "13",
+      "text": "Weak server-side registration validation (empty email/password, repeat check client-only) | server.ts, frontend register | emptyUserRegistration, passwordRepeat"
+    },
+    {
+      "id": "14",
+      "text": "Negative quantity / price manipulation in basket & order | routes/basketItems.ts, routes/order.ts | negativeOrder"
+    },
+    {
+      "id": "15",
+      "text": "Deluxe membership payment bypass | routes/deluxe.ts | freeDeluxe"
+    },
+    {
+      "id": "16",
+      "text": "Coupon codes forgeable (z85, no secret) / expiry not enforced | lib/insecurity.ts, routes/order.ts, routes/coupon.ts | forgedCoupon, manipulateClock"
+    },
+    {
+      "id": "17",
+      "text": "Null byte / path filter bypass and directory listing on /ftp | routes/fileServer.ts, server.ts serveIndex | nullByte, directoryListing, forgottenBackup, forgottenDevBackup, misplacedSignatureFile"
+    },
+    {
+      "id": "18",
+      "text": "Access logs served publicly | server.ts (/support/logs) | accessLogDisclosure"
+    },
+    {
+      "id": "19",
+      "text": "Admin area guarded only client-side / admin REST without role check | frontend routes, server.ts | adminSection"
+    },
+    {
+      "id": "20",
+      "text": "Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse) | server.ts Feedback REST, routes/verify.ts, routes/captcha.ts | feedback, forgedFeedback, zeroStars, captchaBypass"
+    },
+    {
+      "id": "21",
+      "text": "Basket read by ID without ownership check | routes/basket.ts | basketAccess"
+    },
+    {
+      "id": "22",
+      "text": "Basket item add with BasketId from body / duplicate key parsing | routes/basketItems.ts | basketManipulate"
+    },
+    {
+      "id": "23",
+      "text": "Product review author taken from body / update without author check | routes/createProductReviews.ts, routes/updateProductReviews.ts | forgedReview"
+    },
+    {
+      "id": "24",
+      "text": "Product PUT allowed for non-admin | server.ts Products REST | changeProduct"
+    },
+    {
+      "id": "25",
+      "text": "CSRF on profile update (form POST accepted cross-origin, no token) | routes/updateUserProfile.ts | csrf"
+    },
+    {
+      "id": "26",
+      "text": "SSRF via profile image URL fetch | routes/profileImageUrlUpload.ts | ssrf"
+    },
+    {
+      "id": "27",
+      "text": "Weak / hard-coded seed credentials and test accounts | data/static/users.yml, frontend | weakPassword, exposedCredentials, loginSupport, loginAmy, loginRapper"
+    },
+    {
+      "id": "28",
+      "text": "Password reset by security question, no rate limit, guessable answers | routes/resetPassword.ts | resetPassword* (6), geoStalking*"
+    },
+    {
+      "id": "29",
+      "text": "OAuth login derives password from base64(reversed email) client-side | frontend oauth component, routes/login.ts | oauthUserPassword"
+    },
+    {
+      "id": "30",
+      "text": "Change password skips current-password check when param absent (GET params) | routes/changePassword.ts | changePasswordBender"
+    },
+    {
+      "id": "31",
+      "text": "TOTP secret stored in plaintext in users table | routes/2fa.ts, models/user.ts | twoFactorAuthUnsafeSecretStorage"
+    },
+    {
+      "id": "32",
+      "text": "Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys | lib/insecurity.ts | weirdCrypto, passwordHashLeak (hash returned by whoami/Users)"
+    },
+    {
+      "id": "33",
+      "text": "JWT: alg none / RSA public key confusion accepted, legacy express-jwt | lib/insecurity.ts, package.json | jwtUnsigned, jwtForged"
+    },
+    {
+      "id": "34",
+      "text": "Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key) | encryptionkeys/, lib/insecurity.ts, routes/premiumReward.ts, routes/easterEgg.ts | premiumPaywall, easterEggLevelTwo, nftUnlock (private key)"
+    },
+    {
+      "id": "35",
+      "text": "Prometheus /metrics unauthenticated | routes/metrics.ts, server.ts | exposedMetrics"
+    },
+    {
+      "id": "36",
+      "text": "Verbose error handler / stack traces in responses | server.ts errorhandler | errorHandling"
+    },
+    {
+      "id": "37",
+      "text": "XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL | frontend search/product/track-result/administration/last-login-ip, routes/saveLoginIp.ts, routes/videoHandler.ts, routes/userProfile.ts, package.json | localXss, xssBonus, reflectedXss, restfulXss, persistedXssUser, persistedXssFeedback, httpHeaderXss, videoXss, usernameXss"
+    },
+    {
+      "id": "38",
+      "text": "Open redirect allowlist uses substring match | lib/insecurity.ts isRedirectAllowed, routes/redirect.ts | redirect, redirectCryptoCurrency"
+    },
+    {
+      "id": "39",
+      "text": "JSONP whoami callback leaks email cross-origin | routes/currentUser.ts | emailLeak"
+    },
+    {
+      "id": "40",
+      "text": "Known-vulnerable / typosquatted dependencies pinned in manifests | package.json, frontend/package.json, Dockerfile | knownVulnerableComponent, typosquattingNpm, typosquattingAngular, supplyChainAttack, csaf, vulnerableDockerImage"
+    }
+  ],
+  "target_snapshot_sha256": "47771c46bb9649751f9599aa47ac1af80444d460d26c6530f4ff920210173637",
+  "upstream_revision_verified": false,
+  "grading_policy": "../grading-policy.md",
+  "comparison_scope": "Fresh one-pair retry on unchanged retained copies; not directly comparable with earlier model runs"
+}

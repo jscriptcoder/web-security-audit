@@ -1,0 +1,7 @@
+{
+  "status": "complete",
+  "agent": "juice_without_retry",
+  "completed_recorded_utc": "2026-10-29T09:01:15.174222+00:00",
+  "findings": 48,
+  "source_anchors_validated_by_auditor": 135
+}

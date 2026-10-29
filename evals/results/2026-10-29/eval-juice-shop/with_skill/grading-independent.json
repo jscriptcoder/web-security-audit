@@ -1,0 +1,778 @@
+{
+  "target": "juice-shop",
+  "configuration": "with_skill",
+  "report_path": "review-workspace/iteration-2/eval-juice-shop/with_skill/outputs/report.md",
+  "process_path": "review-workspace/iteration-2/eval-juice-shop/with_skill/outputs/process.md",
+  "policy": "iteration-2/grading-policy.md; binary Juice Shop root-cause scoring; report evidence only; source-only adjudication",
+  "expectations": [
+    {
+      "id": "1",
+      "text": "SQL injection in login (string-built query)",
+      "anchor": "routes/login.ts",
+      "challenges": "loginAdmin, loginBender, loginJim, ephemeralAccountant, ghostLogin",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-001 (report.md:24–30) identifies routes/login.ts:33: email is concatenated into SQL and a selected row becomes an authenticated session; correctly retains the MFA prerequisite."
+    },
+    {
+      "id": "2",
+      "text": "SQL injection in product search",
+      "anchor": "routes/search.ts",
+      "challenges": "dbSchema, unionSqlInjection, christmasSpecial",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-001 (report.md:24–30) names routes/search.ts:20–22 and result serialization at line 70: the 200-character query is interpolated twice, enabling predicate/UNION manipulation."
+    },
+    {
+      "id": "3",
+      "text": "NoSQL injection in review update (operator/$where injection)",
+      "anchor": "routes/updateProductReviews.ts",
+      "challenges": "noSqlReviews",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-008 (report.md:93–97) names routes/updateProductReviews.ts:16 and states 'Non-scalar IDs also reach the database selector' and 'broad operator-based updates'. Source confirms {_id:req.body.id}, $set and multi:true. Supported confidence for unresolved MarsDB behavior is appropriate; operator injection is explicitly identified, not inferred from an ownership finding."
+    },
+    {
+      "id": "4",
+      "text": "NoSQL injection in order tracking",
+      "anchor": "routes/trackOrder.ts",
+      "challenges": "noSqlOrders",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-018 (report.md:167–171) identifies routes/trackOrder.ts:18 interpolating caller ID into quoted $where, permitting disclosure of other orders. Source confirms the string expression and gate-dependent sanitization."
+    },
+    {
+      "id": "5",
+      "text": "NoSQL $where sleep / injection in review listing",
+      "anchor": "routes/showProductReviews.ts",
+      "challenges": "noSqlCommand",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-018 names routes/showProductReviews.ts:36 $where concatenation and its busy-wait helper at line 17, with a two-second per-call limit. Source confirms both; no unbounded-loop or MongoDB-server claim is required."
+    },
+    {
+      "id": "6",
+      "text": "SSTI / code execution via username rendered in pug template",
+      "anchor": "routes/userProfile.ts",
+      "challenges": "ssti",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-017 (report.md:159–165) traces POST /profile username into '#{...}' detection and direct eval in routes/userProfile.ts:57–65 before Pug compilation. Correct class and sink; challenge gate is explicitly unresolved."
+    },
+    {
+      "id": "7",
+      "text": "Sandboxed eval of B2B order payload (RCE / DoS)",
+      "anchor": "routes/b2bOrder.ts",
+      "challenges": "rce, rceOccupy",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-021 (report.md:189–195) identifies caller-supplied B2B string evaluated in a two-second VM at routes/b2bOrder.ts:23, causing bounded stalls/resource pressure. Source confirms safeEval(orderLinesData) in vm.runInContext. RCE is not needed because the row explicitly includes DoS."
+    },
+    {
+      "id": "8",
+      "text": "YAML parsing of uploads (yaml bomb)",
+      "anchor": "routes/fileUpload.ts",
+      "challenges": "yamlBomb",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-021 identifies unauthenticated yaml.load followed by JSON.stringify in routes/fileUpload.ts:109–114 and alias graphs multiplying serialization work. Source confirms the exact reconstruction/serialization sink and timeout."
+    },
+    {
+      "id": "9",
+      "text": "XXE in XML upload (noent)",
+      "anchor": "routes/fileUpload.ts",
+      "challenges": "xxeFileDisclosure, xxeDos",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-019 (report.md:175–181) identifies XML uploads, filesystem providers and XML_PARSE_NOENT/DTDLOAD in lib/xml.ts, with expanded content returned through routes/fileUpload.ts. It names XXE/local-file disclosure and bounded entity-expansion risk."
+    },
+    {
+      "id": "10",
+      "text": "Zip slip in zip upload handling",
+      "anchor": "routes/fileUpload.ts",
+      "challenges": "fileWrite",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-020 (report.md:183–187) identifies ZIP entry paths resolved beneath uploads/complaints but checked only against the application-root substring, then written via createWriteStream. Source confirms traversal/overwrite path."
+    },
+    {
+      "id": "11",
+      "text": "Upload size/type enforced client-side or after processing",
+      "anchor": "routes/fileUpload.ts, frontend",
+      "challenges": "uploadSize, uploadType, deprecatedInterface",
+      "passed": false,
+      "score": 0,
+      "evidence": "Not identified at the rubric's sink. WSA-027 describes a different unbounded memory-image disk uploader in server.ts; WSA-019/021 describe XML/YAML processing, but never identify fileUpload.ts checkUploadSize/checkFileType as non-enforcing or the advertised client restriction bypass. Source confirms those two checks merely record challenge state then next(); that discovery is not credited because it is absent from the report."
+    },
+    {
+      "id": "12",
+      "text": "Mass assignment on user registration (role, etc.)",
+      "anchor": "server.ts finale/REST, routes/verify.ts",
+      "challenges": "registerAdmin",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-003 (report.md:41–47) traces public /api/Users registration through Finale to models/user.ts role accepting admin/accounting/deluxe with no write allowlist. Source confirms public create hooks, generated resource and role setter/validator."
+    },
+    {
+      "id": "13",
+      "text": "Weak server-side registration validation (empty email/password, repeat check client-only)",
+      "anchor": "server.ts, frontend register",
+      "challenges": "emptyUserRegistration, passwordRepeat",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-046 (report.md:396–402) identifies registration checks only when email/password/passwordRepeat are all present, then the empty-string password setter hashing without length validation. Source confirms the conditional branch and model setter. The report does not rely solely on UI weakness."
+    },
+    {
+      "id": "14",
+      "text": "Negative quantity / price manipulation in basket & order",
+      "anchor": "routes/basketItems.ts, routes/order.ts",
+      "challenges": "negativeOrder",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-032 (report.md:273–279) names basketItems.ts/models/basketitem.ts missing positive-quantity checks and order.ts stock subtraction, price multiplication and wallet decrement. Source independently confirms checkout arithmetic; impact is bounded to simulated balances."
+    },
+    {
+      "id": "15",
+      "text": "Deluxe membership payment bypass",
+      "anchor": "routes/deluxe.ts",
+      "challenges": "freeDeluxe",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-033 (report.md:281–287) identifies routes/deluxe.ts allowing unknown/missing paymentMode to skip wallet/card validation and reach role upgrade. Source confirms both branches and unconditional subsequent upgrade."
+    },
+    {
+      "id": "16",
+      "text": "Coupon codes forgeable (z85, no secret) / expiry not enforced",
+      "anchor": "lib/insecurity.ts, routes/order.ts, routes/coupon.ts",
+      "challenges": "forgedCoupon, manipulateClock",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-034 (report.md:289–295) identifies unauthenticated Z85 coupon encoding in lib/insecurity.ts and order.ts legacy campaign expiry depending on client date rather than server time. Source confirms both mechanisms; ordinary monthly coupons do have a current-month check."
+    },
+    {
+      "id": "17",
+      "text": "Null byte / path filter bypass and directory listing on /ftp",
+      "anchor": "routes/fileServer.ts, server.ts serveIndex",
+      "challenges": "nullByte, directoryListing, forgottenBackup, forgottenDevBackup, misplacedSignatureFile",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-023/024 (report.md:205–219) identify fileServer.ts suffix allowlisting before literal %00 truncation and public /ftp serveIndex. Source confirms checked versus used filename mismatch and public listing."
+    },
+    {
+      "id": "18",
+      "text": "Access logs served publicly",
+      "anchor": "server.ts (/support/logs)",
+      "challenges": "accessLogDisclosure",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-013/024 identify public /support/logs and combined URL logging, including password-change query values. Source confirms server.ts public mounting and morgan('combined'); no actual live password in logs is asserted."
+    },
+    {
+      "id": "19",
+      "text": "Admin area guarded only client-side / admin REST without role check",
+      "anchor": "frontend routes, server.ts",
+      "challenges": "adminSection",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-004 (report.md:53–60) identifies Users/authentication-details requiring any JWT rather than admin, enabling ordinary customer enumeration. This satisfies the row's 'admin REST without role check' alternative; source confirms generic authorization middleware without a role gate."
+    },
+    {
+      "id": "20",
+      "text": "Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse)",
+      "anchor": "server.ts Feedback REST, routes/verify.ts, routes/captcha.ts",
+      "challenges": "feedback, forgedFeedback, zeroStars, captchaBypass",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-004 identifies public forged UserId feedback creation and any-customer deletion; WSA-036 identifies exposed CAPTCHA answers and replay. Source confirms Feedback item JWT-only policy and CAPTCHA verification without consumption. Zero-star behavior is not explicitly covered, but a substantive class/sink hit is present."
+    },
+    {
+      "id": "21",
+      "text": "Basket read by ID without ownership check",
+      "anchor": "routes/basket.ts",
+      "challenges": "basketAccess",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-006 (report.md:73–79) identifies routes/basket.ts:19 selecting basket by requested ID without owner, despite token middleware. The report names the precise owner-check omission."
+    },
+    {
+      "id": "22",
+      "text": "Basket item add with BasketId from body / duplicate key parsing",
+      "anchor": "routes/basketItems.ts",
+      "challenges": "basketManipulate",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-007 (report.md:81–87) identifies raw duplicate JSON parsing in routes/basketItems.ts, first BasketId authorization and later BasketId insertion. This directly addresses the row rather than generic basket IDOR."
+    },
+    {
+      "id": "23",
+      "text": "Product review author taken from body / update without author check",
+      "anchor": "routes/createProductReviews.ts, routes/updateProductReviews.ts",
+      "challenges": "forgedReview",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-008 identifies public review creation storing request author/message and authenticated update selecting only id with no author predicate. Source independently confirms both handlers and mounts."
+    },
+    {
+      "id": "24",
+      "text": "Product PUT allowed for non-admin",
+      "anchor": "server.ts Products REST",
+      "challenges": "changeProduct",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-004 Products row states update authentication is commented out at server.ts:393, allowing anonymous product changes. Source confirms the missing PUT gate and generated Products CRUD."
+    },
+    {
+      "id": "25",
+      "text": "CSRF on profile update (form POST accepted cross-origin, no token)",
+      "anchor": "routes/updateUserProfile.ts",
+      "challenges": "csrf",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-031 (report.md:265–271) identifies cookie-authenticated POST /profile via updateUserProfile.ts, URL-encoded bodies and missing CSRF/origin policy. Cookie-delivery/SameSite prerequisites are explicitly bounded."
+    },
+    {
+      "id": "26",
+      "text": "SSRF via profile image URL fetch",
+      "anchor": "routes/profileImageUrlUpload.ts",
+      "challenges": "ssrf",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-025 (report.md:221–227) identifies routes/profileImageUrlUpload.ts:24 fetch(url) without destination, redirect or network policy and a public response-body file. Source confirms the fetch/persistence flow; no cloud-specific result is invented."
+    },
+    {
+      "id": "27",
+      "text": "Weak / hard-coded seed credentials and test accounts",
+      "anchor": "data/static/users.yml, frontend",
+      "challenges": "weakPassword, exposedCredentials, loginSupport, loginAmy, loginRapper",
+      "passed": false,
+      "score": 0,
+      "evidence": "No weak/hard-coded seed account or frontend test credential is identified. Data initialization coverage explicitly says remaining seed rows are not a full credential audit. WSA-046 weak user-chosen password policy and WSA-011 deterministic OAuth credentials are distinct mechanisms."
+    },
+    {
+      "id": "28",
+      "text": "Password reset by security question, no rate limit, guessable answers",
+      "anchor": "routes/resetPassword.ts",
+      "challenges": "resetPassword* (6), geoStalking*",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-012 (report.md:119–125) identifies email plus security answer as sufficient reset authority, publicly returned configured answers used by datacreator, and no fresh one-use recovery proof. WSA-037 bounds the actual 100-per-five-minute reset limiter and forwarded-IP weakness rather than falsely asserting no limiter. Source confirms reset, configuration export and seed linkage."
+    },
+    {
+      "id": "29",
+      "text": "OAuth login derives password from base64(reversed email) client-side",
+      "anchor": "frontend oauth component, routes/login.ts",
+      "challenges": "oauthUserPassword",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-011 (report.md:111–117) identifies frontend OAuth password as Base64(reversed email), then local registration/login; knows-email password recovery is stated with MFA limitation."
+    },
+    {
+      "id": "30",
+      "text": "Change password skips current-password check when param absent (GET params)",
+      "anchor": "routes/changePassword.ts",
+      "challenges": "changePasswordBender",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-013 identifies query current/new/repeat on a GET and truthy-only current password comparison. Source independently confirms currentPassword && hash(...) and subsequent mutation for cached token identity."
+    },
+    {
+      "id": "31",
+      "text": "TOTP secret stored in plaintext in users table",
+      "anchor": "routes/2fa.ts, models/user.ts",
+      "challenges": "twoFactorAuthUnsafeSecretStorage",
+      "passed": false,
+      "score": 0,
+      "evidence": "WSA-010/016/044 identify disclosure of usable TOTP seeds in models, JWTs and whoami, but do not identify plaintext-at-rest storage as a root cause or cite the setup assignment to the ordinary Users string column. Source confirms that storage flaw exists; it is not credited from grader discovery. Strict distinct-mechanism decision; coordinator may judge implicit seed disclosure sufficient."
+    },
+    {
+      "id": "32",
+      "text": "Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys",
+      "anchor": "lib/insecurity.ts",
+      "challenges": "weirdCrypto, passwordHashLeak (hash returned by whoami/Users)",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-014 identifies unsalted MD5 password hashing and source-fixed HMAC key in lib/insecurity.ts; WSA-002 covers embedded RSA key; WSA-010 covers returned hashes. Source confirms MD5/HMAC and user setter; class and sinks match."
+    },
+    {
+      "id": "33",
+      "text": "JWT: alg none / RSA public key confusion accepted, legacy express-jwt",
+      "anchor": "lib/insecurity.ts, package.json",
+      "challenges": "jwtUnsigned, jwtForged",
+      "passed": false,
+      "score": 0,
+      "evidence": "Not identified as an established vulnerability. 'Legacy dependency hypotheses' explicitly withholds algorithm confusion; JWT section says algorithm-confusion behavior unresolved. WSA-002 key theft and WSA-015/016 lifecycle/purpose flaws are different mechanisms and do not satisfy alg-none/RSA-public-key acceptance."
+    },
+    {
+      "id": "34",
+      "text": "Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key)",
+      "anchor": "encryptionkeys/, lib/insecurity.ts, routes/premiumReward.ts, routes/easterEgg.ts",
+      "challenges": "premiumPaywall, easterEggLevelTwo, nftUnlock (private key)",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-002 identifies the hard-coded reusable RSA private key in lib/insecurity.ts and its identical public Terraform copy; WSA-024 identifies public /encryptionkeys. Independently normalized key material matches and server public source serving does not redact it. Credit for embedded/shipped secret-key class; premium AES/ctf.key/easter-egg specifics are absent."
+    },
+    {
+      "id": "35",
+      "text": "Prometheus /metrics unauthenticated",
+      "anchor": "routes/metrics.ts, server.ts",
+      "challenges": "exposedMetrics",
+      "passed": true,
+      "score": 1,
+      "evidence": "Positive controls/unresolved leads, 'Metrics/errors' (report.md:428), explicitly says '/metrics is public' and emits operational/business aggregates, names server.ts:696, and recommends restricting diagnostics. Source confirms unguarded metrics mount and register.metrics(); a numbered High finding is not required."
+    },
+    {
+      "id": "36",
+      "text": "Verbose error handler / stack traces in responses",
+      "anchor": "server.ts errorhandler",
+      "challenges": "errorHandling",
+      "passed": true,
+      "score": 1,
+      "evidence": "Same 'Metrics/errors' paragraph identifies always-installed development-style errorhandler at server.ts:702 exposing diagnostic details; WSA-019 also traces parser content into public errors. Source confirms unconditional errorhandler(). No runtime stack capture is required by a source-review rubric."
+    },
+    {
+      "id": "37",
+      "text": "XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL",
+      "anchor": "frontend search/product/track-result/administration/last-login-ip, routes/saveLoginIp.ts, routes/videoHandler.ts, routes/userProfile.ts, package.json",
+      "challenges": "localXss, xssBonus, reflectedXss, restfulXss, persistedXssUser, persistedXssFeedback, httpHeaderXss, videoXss, usernameXss",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-029 (report.md:249–263) traces search q, tracking order ID, product description, admin email and True-Client-IP to explicit Angular trust bypasses and HTML rendering. WSA-020 covers subtitle-to-script extension and unresolved leads cover profile CSP. Multiple correct class/sink pairs satisfy this bundled row; exact sanitizer bypass is correctly not claimed verified."
+    },
+    {
+      "id": "38",
+      "text": "Open redirect allowlist uses substring match",
+      "anchor": "lib/insecurity.ts isRedirectAllowed, routes/redirect.ts",
+      "challenges": "redirect, redirectCryptoCurrency",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-042 (report.md:363–369) identifies isRedirectAllowed substring acceptance and routes/redirect.ts, with a trusted URL embedded in attacker query as example. Source independently confirms includes(allowedUrl)."
+    },
+    {
+      "id": "39",
+      "text": "JSONP whoami callback leaks email cross-origin",
+      "anchor": "routes/currentUser.ts",
+      "challenges": "emailLeak",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-044 (report.md:380–386) identifies cookie-authenticated currentUser.ts JSONP callback exposing user fields cross-origin, with SameSite/cookie prerequisites. Source confirms default email projection, caller field selection and res.jsonp."
+    },
+    {
+      "id": "40",
+      "text": "Known-vulnerable / typosquatted dependencies pinned in manifests",
+      "anchor": "package.json, frontend/package.json, Dockerfile",
+      "challenges": "knownVulnerableComponent, typosquattingNpm, typosquattingAngular, supplyChainAttack, csaf, vulnerableDockerImage",
+      "passed": false,
+      "score": 0,
+      "evidence": "No established vulnerable/typosquatted dependency is identified. The legacy-dependency paragraph explicitly keeps old manifest versions as unresolved hypotheses and no typosquatted package is named. Conservative calibration is good, but does not satisfy detection."
+    }
+  ],
+  "summary": {
+    "passed": 35,
+    "failed": 5,
+    "total": 40,
+    "pass_rate": 0.875
+  },
+  "weighted_totals": {
+    "core": {
+      "score": 35,
+      "maximum": 40,
+      "rate": 0.875
+    }
+  },
+  "bonus_expectations": [
+    {
+      "id": "B1",
+      "text": "Race condition on review likes (routes/likeProductReviews.ts) — timingAttack",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-035 identifies likedBy check followed by separate increment, 150 ms delay and later list update. Source independently confirms a non-atomic read/check/write schedule; runtime concurrency remains unexecuted."
+    },
+    {
+      "id": "B2",
+      "text": "Local file read in data erasure layout param (routes/dataErasure.ts) — lfr",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-028 traces caller layout through request-body spread into res.render, weak path substring exclusions and rendered excerpt. Source confirms both gated and fallback body spreads. Correct path/class with Handlebars resolution explicitly conditional."
+    },
+    {
+      "id": "B3",
+      "text": "Data export matching other users' data (routes/dataExport.ts) — dataExport",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-009 identifies lossy vowel-redacted email used for order export authorization and gives colliding synthetic accounts. Source confirms dataExport's identical transform/query and order storage/history linkage."
+    },
+    {
+      "id": "B4",
+      "text": "Chatbot prompt injection / debug info to non-admins (routes/chat.ts) — chatbotPromptInjection, chatbotGreedyInjection, aiDebugging, systemPromptExtraction",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-039 identifies prompt-only coupon eligibility and maximum-discount policy, unbounded z.number tool argument and unconditional coupon generation; client messages, usernames and reviews enter prompt/context. Source confirms the policy/tool mismatch. Debug/prompt extraction specifics are not required for this bundled root-cause credit."
+    },
+    {
+      "id": "B5",
+      "text": "Web3: reentrancy in wallet contract, NFT mint logic, sandbox route (routes/web3Wallet.ts, routes/nftMint.ts, data/static/web3-snippets) — web3Wallet, nftMint, web3Sandbox",
+      "passed": false,
+      "score": 0,
+      "evidence": "WSA-045's web3Wallet unbounded Set is a distinct availability issue. No reentrancy, NFT mint authorization/logic or sandbox vulnerability is identified; contract correctness is explicitly not reviewed."
+    },
+    {
+      "id": "B6",
+      "text": "Hidden routes reachable client-side (token sale, score board, privacy policy, IaC files under assets, extra language file, blueprint under public assets) — tokenSale, scoreBoard, misplacedIacFiles, extraLanguage, retrieveBlueprint",
+      "passed": true,
+      "score": 1,
+      "evidence": "WSA-002/024 identify publicly reachable and listed infrastructure Terraform source, including the secret-bearing networking file, with server.ts mount and response path. Source confirms this source-visible IaC exposure. Credit is for the IaC alternative, not inferred detection of hidden token-sale/scoreboard/blueprint routes."
+    },
+    {
+      "id": "B7",
+      "text": "Hashid-based continue code forgeable (routes/restoreProgress.ts) — continueCode",
+      "passed": false,
+      "score": 0,
+      "evidence": "Report mentions continue/restore routes as shared public training state but never identifies forgeable Hashids or lack of authenticity in continue codes."
+    },
+    {
+      "id": "B8",
+      "text": "SVG/HTML injection into delivery address or similar — svgInjection",
+      "passed": false,
+      "score": 0,
+      "evidence": "No delivery-address or comparable text-field SVG/HTML sink is identified. WSA-026 does establish an alternate active-SVG mechanism, not merely upload acceptance: caller-selected .svg URL bytes are persisted unchanged under the static application origin, allowing active-document navigation when content type/CSP permit. This was source-verified in profileImageUrlUpload.ts and server.ts, but is a different sink/root cause from address-field injection. WSA-030 independently establishes forged-review content reaching document.write. Strict interpretation scores 0; a broad reading of 'or similar' could reasonably credit these genuine alternate SVG/HTML injection paths."
+    },
+    {
+      "id": "B9",
+      "text": "Missing output encoding of image filename — missingEncoding",
+      "passed": false,
+      "score": 0,
+      "evidence": "No unencoded image-filename rendering issue is identified. Upload path validation and active file publication do not establish the filename-output-encoding root cause."
+    }
+  ],
+  "bonus_summary": {
+    "passed": 5,
+    "failed": 4,
+    "total": 9,
+    "score": 5,
+    "maximum": 9,
+    "pass_rate": 0.5555555555555556
+  },
+  "calibration": {
+    "assessment": "Strong separation of source-level proof, conditional Supported findings, and unresolved leads. No runtime reproduction is claimed. Detailed gates, MFA barriers, cookie/SameSite conditions, Windows specificity, and simulated-payment bounds generally match the available evidence.",
+    "reported_findings": {
+      "total": 46,
+      "confirmed_source_proven": 28,
+      "supported": 18,
+      "runtime_reproduced": 0
+    },
+    "severity_overclaims": [],
+    "caveats": [
+      "Several Confirmed findings rely on declared Finale/Sequelize semantics rather than installed implementation inspection. This is disclosed globally; source-supported rather than runtime-verified is the correct reading.",
+      "Critical eval finding is explicitly gated; High browser/LLM findings remain Supported. These conditional severity labels are not confirmed false positives.",
+      "The report's source-line existence validation must not be mistaken for semantic verification.",
+      "Conservative withholding of version-only JWT/CVE/sanitizer claims reduces rubric coverage but is not itself an accuracy failure."
+    ]
+  },
+  "false_claims": {
+    "confirmed_false_positives": [],
+    "confirmed_false_positive_count": 0,
+    "count_interpretation": "No above-Low trap/non-issue was established as false in this adjudication. This is a count of confirmed contradictions found, not proof that all claims are true or a zero false-positive rate.",
+    "verification_coverage": "Entire 606-line report and complete process notes were read. Numerous application control/data paths were independently inspected (see claims and source_verification), but no full transcript, installed dependencies, runtime, browser, LLM or complete external deployment was available. Some report mechanisms and sibling paths were not independently re-traced.",
+    "unresolved": [
+      "Third-party JWT algorithm behavior, sanitization bypasses and native YAML behavior are expressly hypotheses, not scored false positives.",
+      "Windows traversal transport behavior, generated ORM semantics and browser/LLM prerequisites remain conditional.",
+      "Exact extent of executor source reads and source-only execution cannot be independently verified from process notes."
+    ]
+  },
+  "claims": [
+    {
+      "claim": "The public Terraform copy contains the same RSA signing private key as lib/insecurity.ts.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified",
+      "evidence": "Independently extracted PEM bodies and normalized literal CR/LF escapes and whitespace: material equal (866 normalized characters each). Read server.ts public /infrastructure source response and lib/terraformCustomization.ts, which renames application strings without removing secrets. No key bytes included in grading."
+    },
+    {
+      "claim": "A customer can transfer an address's ownership through generated PUT and then read it.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read server.ts Address PUT: appendUserId only, generated resource by id; lib/insecurity.ts overwrites update body owner; models/address.ts has no owner immutability hook; custom address GET scopes by resulting owner. Finale mutation semantics not executed."
+    },
+    {
+      "claim": "Configuration response leaks recovery answers that authorize password reset.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified",
+      "evidence": "Read appConfiguration.ts full config clone minus only llmApiUrl, default.yml recovery-answer fields, datacreator.ts:348–354 consuming those fields, and resetPassword.ts using answer HMAC to authorize reset. Values redacted from grading."
+    },
+    {
+      "claim": "Cached tokens can outlive expiry for cache-only consumers; MFA temporary tokens are not purpose restricted at generic JWT APIs.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read tokenMap/get/updateAuthenticatedUsers/appendUserId in lib/insecurity.ts, changePassword.ts cached-token consumption, 2fa.ts type checks and server generic JWT mounts. Direct source policy supports both; installed JWT middleware acceptance and elapsed-time replay were not executed."
+    },
+    {
+      "claim": "Full users can expose sensitive fields through public memories and caller-selectable whoami fields.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read memory.ts full User association, models/user.ts lack of default exclusion scope, server public memories mount and currentUser.ts arbitrary field copying. Serialization relies on declared ORM semantics; no live response or populated memory dataset inspected."
+    },
+    {
+      "claim": "Masked-email order authorization collides across users.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified",
+      "evidence": "Read order.ts stored vowel replacement, orderHistory.ts and dataExport.ts identical transform for order lookup, and chat.ts identical comparison. Report's synthetic alice/elice pair has the same masked value."
+    },
+    {
+      "claim": "Review attribution can seed attacker HTML into a victim's exported same-origin document.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read public createProductReviews body author/message storage, dataExport review selection by victim email and JSON.stringify, frontend data-export document.write. Browser popup/CSP behavior remains unverified, matching report qualification."
+    },
+    {
+      "claim": "Profile URL upload publishes active SVG content under the application origin.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read URL-derived extension allowlist containing svg, unchecked fetch bytes persisted to public uploads and static root registration. Content-type/CSP/browser script execution not tested; report labels Supported."
+    },
+    {
+      "claim": "Disk memory upload occurs before authentication without a per-file size bound.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified",
+      "evidence": "Read server.ts rest/memories middleware order and uploadToDisk configuration (client MIME mapping, no limits); upload precedes appendUserId. Distinct from core row 11's complaint-upload validation mechanism."
+    },
+    {
+      "claim": "Checkout/payment changes and likes are non-atomic; payment modes and wallet credit fail open.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read full order flow, deluxe.ts and wallet.ts; separate inventory read/write and balance read/decrement, unvalidated non-wallet branch, caller balance credit after owned-card lookup; read likes delayed update. No real-money payment integration or concurrency reproduction inferred."
+    },
+    {
+      "claim": "Windows download handlers can traverse using backslashes.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported_partial",
+      "evidence": "Read keyServer.ts and fileServer.ts rejecting only '/' before path.resolve and sendFile. Windows path semantics support the conditional concern; did not independently inspect every claimed sibling or execute Express/proxy decoding."
+    },
+    {
+      "claim": "LLM order-tool identity derives from unsigned JWT payload, and coupon policy exists only in prompt.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified_policy",
+      "evidence": "Read chat.ts getUserId decode-only, order-tool lookup against that chosen user's email, z.number coupon input and unguarded generateCoupon; server mounts chat publicly. Model tool selection not verified; report explicitly conditions end-to-end result."
+    },
+    {
+      "claim": "Anonymous chat lacks local request/user/provider-spend budgets.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read public chat mount and streamText options: client history, ten-step limit, no output-token budget or handler quota/disconnect cancellation. Provider quota/cost impact depends on external configuration; no provider call made."
+    },
+    {
+      "claim": "Chat history persists after logout and is shared across accounts on one browser profile.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified",
+      "evidence": "Read single-key conversation-storage service, navbar/sidenav logout bodies and welcome-screen getAll. Logout removes authentication/basket state but never the shared conversation key."
+    },
+    {
+      "claim": "Anonymous addresses, CAPTCHAs and MIME metric labels can accumulate without bounded lifecycle.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_supported",
+      "evidence": "Read web3Wallet Set insertion before provider setup with only matching event deletion, captcha insert/non-consuming verify, server public mounts and metrics file.mimetype labels. No exhaustion threshold or dependency memory measurement verified."
+    },
+    {
+      "claim": "Supplied Terraform HTTP listener forwards application traffic without redirect.",
+      "type": "factual",
+      "verified": true,
+      "status": "source_verified_configuration",
+      "evidence": "Read terraform/networking.tf HTTP default_action forward and separate HTTPS listener. Actual deployment/edge policy not verified, as report states."
+    },
+    {
+      "claim": "All 61 routes, 23 models, 214 complete source paths were read and no app/network/test execution occurred.",
+      "type": "process",
+      "verified": false,
+      "status": "self_reported_only",
+      "evidence": "process.md contains an extensive read ledger and source-only tool description, but no full execution transcript is available. Inventory metadata cannot prove full semantic reads or absence of other actions."
+    },
+    {
+      "claim": "All 201 explicit source references resolve and every finding includes fix/regression guidance.",
+      "type": "quality",
+      "verified": false,
+      "status": "partially_checked",
+      "evidence": "Report read fully and finding structure inspected; substantive source checks were extensive but this grader did not re-run every path/line existence check. Existence alone would not establish semantic correctness."
+    }
+  ],
+  "coverage": {
+    "statement_present": true,
+    "report_sections": [
+      "Scope and architecture",
+      "Coverage ledger",
+      "Generated API operation and ownership matrix",
+      "Custom route handler groups",
+      "Other handler/source groups and remaining scope",
+      "Limitations and verification"
+    ],
+    "named_reviewed_areas": [
+      "server.ts/app.ts",
+      "all routes/*.ts (61 self-reported)",
+      "all models/*.ts (23 self-reported)",
+      "top-level lib and startup modules",
+      "all non-spec frontend Services",
+      "selected Angular rendering/authentication/storage components",
+      "Pug/Handlebars templates",
+      "default/unsafe security configuration",
+      "Docker/Compose and Terraform"
+    ],
+    "explicit_residual_scope": [
+      "unlisted frontend components/helpers",
+      "alternate configuration profiles",
+      "remaining seed data/static content",
+      "smart-contract correctness",
+      "CI/tests/builds",
+      "installed dependency internals",
+      "effective edge/cache/proxy configuration",
+      "all runtime testing"
+    ],
+    "process_ledger_status": "self-reported; not a transcript",
+    "inventory": {
+      "type": "static search metadata",
+      "handler_groups": 22,
+      "leads": 982,
+      "excerpts_redacted": true,
+      "credit_policy": "Inventory matches do not receive finding or read-coverage credit by themselves."
+    }
+  },
+  "source_verification": {
+    "method": "Read-only static source inspection; no target execution, dependency install, live testing or external browsing.",
+    "substantive_paths_read": [
+      "server.ts:261–545 and 611–745",
+      "lib/insecurity.ts security/hash/cache/coupon/role functions",
+      "models/user.ts",
+      "models/address.ts",
+      "routes/updateProductReviews.ts",
+      "routes/showProductReviews.ts",
+      "routes/trackOrder.ts",
+      "routes/fileUpload.ts",
+      "routes/b2bOrder.ts",
+      "routes/currentUser.ts",
+      "routes/appConfiguration.ts",
+      "routes/resetPassword.ts",
+      "routes/dataErasure.ts",
+      "routes/dataExport.ts",
+      "routes/2fa.ts",
+      "routes/chat.ts",
+      "routes/web3Wallet.ts",
+      "routes/metrics.ts:1–125",
+      "routes/likeProductReviews.ts",
+      "routes/memory.ts",
+      "routes/profileImageUrlUpload.ts",
+      "routes/keyServer.ts",
+      "routes/fileServer.ts",
+      "lib/terraformCustomization.ts",
+      "terraform/networking.tf HTTP/HTTPS block",
+      "routes/createProductReviews.ts",
+      "routes/orderHistory.ts",
+      "routes/order.ts:1–225",
+      "routes/deluxe.ts",
+      "routes/wallet.ts",
+      "routes/captcha.ts",
+      "routes/imageCaptcha.ts",
+      "routes/changePassword.ts:1–65",
+      "routes/address.ts",
+      "frontend Services/conversation-storage.service.ts",
+      "frontend chatbot/chat-welcome-screen component",
+      "frontend navbar/sidenav logout blocks",
+      "frontend data-export document.write block",
+      "config/default.yml recovery fields",
+      "data/datacreator.ts:341–362"
+    ],
+    "special_checks": [
+      "Normalized RSA private-key material equality between lib/insecurity.ts and infrastructure/terraform/networking.tf was true; no key bytes included in grading."
+    ],
+    "limits": "The listed reads are semantic spot/adjudication checks, not an independent complete re-audit or exhaustive verification of all 46 findings. Correct report anchors without independent flow checks are not labeled source-verified here."
+  },
+  "rubric_omissions": {
+    "core_ids": [
+      "11",
+      "27",
+      "31",
+      "33",
+      "40"
+    ],
+    "bonus_ids": [
+      "B5",
+      "B7",
+      "B8",
+      "B9"
+    ],
+    "note": "These are detection omissions, not false claims."
+  },
+  "ambiguities_for_coordinator": [
+    {
+      "id": "31",
+      "decision": "0",
+      "reason": "Report proves TOTP-secret exposure but never explicitly identifies plaintext database storage. Strict separate-mechanism interpretation; a broader implicit-storage reading would produce 36/40."
+    },
+    {
+      "id": "34",
+      "decision": "1",
+      "reason": "Credit for explicitly hard-coded shipped RSA secret in a named rubric anchor; premium/easter-egg AES and ctf.key mechanisms are not described. Bundled row does not state all listed subcases are mandatory."
+    },
+    {
+      "id": "B6",
+      "decision": "1",
+      "reason": "Credit for concrete public IaC exposure, one listed alternative; source copy uses /infrastructure rather than assets. Hidden client route enumeration is absent."
+    },
+    {
+      "id": "B8",
+      "decision": "0",
+      "reason": "Report establishes genuine alternate SVG/HTML injection: WSA-026 traces unvalidated SVG bytes to same-origin static publication plus active-document navigation prerequisites; WSA-030 traces review text to document.write. They are not mere upload acceptance. Scored 0 under a strict delivery-address/text-field root-cause interpretation; broad 'or similar' interpretation could score 1."
+    },
+    {
+      "id": "35/36",
+      "decision": "1 each",
+      "reason": "Explicit class and sink appear in bounded observations, not numbered findings; rubric says report must name class/sink, not severity or numbered-finding status."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "No user_notes.md exists; process.md documents missing runtime/gate/library/edge evidence and unmeasured audit-wide timing/tokens."
+    ],
+    "needs_review": [
+      "Coordinator adjudication of the listed row-boundary interpretations."
+    ],
+    "workarounds": [
+      "Self-reported truncated source batches were reread; inventory excerpts were redacted; speculative tracking path traversal was withdrawn after encodeURIComponent check."
+    ]
+  },
+  "execution_metrics": {
+    "available": false,
+    "reason": "No executor metrics.json or full transcript supplied. Output byte counts are not token telemetry."
+  },
+  "timing": {
+    "available": false,
+    "reason": "No timing.json supplied; process explicitly reports no measured audit-wide elapsed/token count."
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "31",
+        "reason": "Specify whether reporting usable TOTP seed exposure counts as plaintext-at-rest detection; current wording separates these classes but leaves implicit recognition ambiguous."
+      },
+      {
+        "assertion": "34,37,40 and B4/B5/B6/B8",
+        "reason": "Bundled independent mechanisms and 'or similar' allow inconsistent any-versus-all coverage. Define per-row minimum class/sink evidence, especially for active SVG upload versus address injection and public IaC versus hidden UI routes."
+      },
+      {
+        "assertion": "28",
+        "reason": "The frozen row says 'no rate limit', while supplied server.ts has a 100/5-minute reset limit. Grade the actual weak recovery and limiter-bypass mechanisms without rewarding a contradicted absolute statement."
+      }
+    ],
+    "overall": "Rubric provides useful root-cause coverage but is not comprehensive: several substantiated new identity, serialization, storage and LLM findings remain outside the 40-row score. Keep those qualitative findings separate rather than adding ad hoc core points."
+  }
+}

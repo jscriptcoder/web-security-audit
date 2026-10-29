@@ -1,0 +1,1637 @@
+{
+  "metadata": {
+    "skill_name": "web-security-audit",
+    "timestamp": "2026-10-29T09:49:08.812403+00:00",
+    "evals_run": [
+      "Juice Shop root causes",
+      "WebGoat platform",
+      "WebGoat challenges",
+      "WebGoat lesson coverage",
+      "WebGoat calibration"
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "Juice Shop root causes",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 35,
+        "total": 40,
+        "pass_rate": 0.875,
+        "weighted_score": 35
+      },
+      "expectations": [
+        {
+          "id": "1",
+          "text": "SQL injection in login (string-built query)",
+          "anchor": "routes/login.ts",
+          "challenges": "loginAdmin, loginBender, loginJim, ephemeralAccountant, ghostLogin",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-001 (report.md:24\u201330) identifies routes/login.ts:33: email is concatenated into SQL and a selected row becomes an authenticated session; correctly retains the MFA prerequisite."
+        },
+        {
+          "id": "2",
+          "text": "SQL injection in product search",
+          "anchor": "routes/search.ts",
+          "challenges": "dbSchema, unionSqlInjection, christmasSpecial",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-001 (report.md:24\u201330) names routes/search.ts:20\u201322 and result serialization at line 70: the 200-character query is interpolated twice, enabling predicate/UNION manipulation."
+        },
+        {
+          "id": "3",
+          "text": "NoSQL injection in review update (operator/$where injection)",
+          "anchor": "routes/updateProductReviews.ts",
+          "challenges": "noSqlReviews",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-008 (report.md:93\u201397) names routes/updateProductReviews.ts:16 and states 'Non-scalar IDs also reach the database selector' and 'broad operator-based updates'. Source confirms {_id:req.body.id}, $set and multi:true. Supported confidence for unresolved MarsDB behavior is appropriate; operator injection is explicitly identified, not inferred from an ownership finding."
+        },
+        {
+          "id": "4",
+          "text": "NoSQL injection in order tracking",
+          "anchor": "routes/trackOrder.ts",
+          "challenges": "noSqlOrders",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-018 (report.md:167\u2013171) identifies routes/trackOrder.ts:18 interpolating caller ID into quoted $where, permitting disclosure of other orders. Source confirms the string expression and gate-dependent sanitization."
+        },
+        {
+          "id": "5",
+          "text": "NoSQL $where sleep / injection in review listing",
+          "anchor": "routes/showProductReviews.ts",
+          "challenges": "noSqlCommand",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-018 names routes/showProductReviews.ts:36 $where concatenation and its busy-wait helper at line 17, with a two-second per-call limit. Source confirms both; no unbounded-loop or MongoDB-server claim is required."
+        },
+        {
+          "id": "6",
+          "text": "SSTI / code execution via username rendered in pug template",
+          "anchor": "routes/userProfile.ts",
+          "challenges": "ssti",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-017 (report.md:159\u2013165) traces POST /profile username into '#{...}' detection and direct eval in routes/userProfile.ts:57\u201365 before Pug compilation. Correct class and sink; challenge gate is explicitly unresolved."
+        },
+        {
+          "id": "7",
+          "text": "Sandboxed eval of B2B order payload (RCE / DoS)",
+          "anchor": "routes/b2bOrder.ts",
+          "challenges": "rce, rceOccupy",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-021 (report.md:189\u2013195) identifies caller-supplied B2B string evaluated in a two-second VM at routes/b2bOrder.ts:23, causing bounded stalls/resource pressure. Source confirms safeEval(orderLinesData) in vm.runInContext. RCE is not needed because the row explicitly includes DoS."
+        },
+        {
+          "id": "8",
+          "text": "YAML parsing of uploads (yaml bomb)",
+          "anchor": "routes/fileUpload.ts",
+          "challenges": "yamlBomb",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-021 identifies unauthenticated yaml.load followed by JSON.stringify in routes/fileUpload.ts:109\u2013114 and alias graphs multiplying serialization work. Source confirms the exact reconstruction/serialization sink and timeout."
+        },
+        {
+          "id": "9",
+          "text": "XXE in XML upload (noent)",
+          "anchor": "routes/fileUpload.ts",
+          "challenges": "xxeFileDisclosure, xxeDos",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-019 (report.md:175\u2013181) identifies XML uploads, filesystem providers and XML_PARSE_NOENT/DTDLOAD in lib/xml.ts, with expanded content returned through routes/fileUpload.ts. It names XXE/local-file disclosure and bounded entity-expansion risk."
+        },
+        {
+          "id": "10",
+          "text": "Zip slip in zip upload handling",
+          "anchor": "routes/fileUpload.ts",
+          "challenges": "fileWrite",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-020 (report.md:183\u2013187) identifies ZIP entry paths resolved beneath uploads/complaints but checked only against the application-root substring, then written via createWriteStream. Source confirms traversal/overwrite path."
+        },
+        {
+          "id": "11",
+          "text": "Upload size/type enforced client-side or after processing",
+          "anchor": "routes/fileUpload.ts, frontend",
+          "challenges": "uploadSize, uploadType, deprecatedInterface",
+          "passed": false,
+          "score": 0,
+          "evidence": "Not identified at the rubric's sink. WSA-027 describes a different unbounded memory-image disk uploader in server.ts; WSA-019/021 describe XML/YAML processing, but never identify fileUpload.ts checkUploadSize/checkFileType as non-enforcing or the advertised client restriction bypass. Source confirms those two checks merely record challenge state then next(); that discovery is not credited because it is absent from the report."
+        },
+        {
+          "id": "12",
+          "text": "Mass assignment on user registration (role, etc.)",
+          "anchor": "server.ts finale/REST, routes/verify.ts",
+          "challenges": "registerAdmin",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-003 (report.md:41\u201347) traces public /api/Users registration through Finale to models/user.ts role accepting admin/accounting/deluxe with no write allowlist. Source confirms public create hooks, generated resource and role setter/validator."
+        },
+        {
+          "id": "13",
+          "text": "Weak server-side registration validation (empty email/password, repeat check client-only)",
+          "anchor": "server.ts, frontend register",
+          "challenges": "emptyUserRegistration, passwordRepeat",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-046 (report.md:396\u2013402) identifies registration checks only when email/password/passwordRepeat are all present, then the empty-string password setter hashing without length validation. Source confirms the conditional branch and model setter. The report does not rely solely on UI weakness."
+        },
+        {
+          "id": "14",
+          "text": "Negative quantity / price manipulation in basket & order",
+          "anchor": "routes/basketItems.ts, routes/order.ts",
+          "challenges": "negativeOrder",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-032 (report.md:273\u2013279) names basketItems.ts/models/basketitem.ts missing positive-quantity checks and order.ts stock subtraction, price multiplication and wallet decrement. Source independently confirms checkout arithmetic; impact is bounded to simulated balances."
+        },
+        {
+          "id": "15",
+          "text": "Deluxe membership payment bypass",
+          "anchor": "routes/deluxe.ts",
+          "challenges": "freeDeluxe",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-033 (report.md:281\u2013287) identifies routes/deluxe.ts allowing unknown/missing paymentMode to skip wallet/card validation and reach role upgrade. Source confirms both branches and unconditional subsequent upgrade."
+        },
+        {
+          "id": "16",
+          "text": "Coupon codes forgeable (z85, no secret) / expiry not enforced",
+          "anchor": "lib/insecurity.ts, routes/order.ts, routes/coupon.ts",
+          "challenges": "forgedCoupon, manipulateClock",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-034 (report.md:289\u2013295) identifies unauthenticated Z85 coupon encoding in lib/insecurity.ts and order.ts legacy campaign expiry depending on client date rather than server time. Source confirms both mechanisms; ordinary monthly coupons do have a current-month check."
+        },
+        {
+          "id": "17",
+          "text": "Null byte / path filter bypass and directory listing on /ftp",
+          "anchor": "routes/fileServer.ts, server.ts serveIndex",
+          "challenges": "nullByte, directoryListing, forgottenBackup, forgottenDevBackup, misplacedSignatureFile",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-023/024 (report.md:205\u2013219) identify fileServer.ts suffix allowlisting before literal %00 truncation and public /ftp serveIndex. Source confirms checked versus used filename mismatch and public listing."
+        },
+        {
+          "id": "18",
+          "text": "Access logs served publicly",
+          "anchor": "server.ts (/support/logs)",
+          "challenges": "accessLogDisclosure",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-013/024 identify public /support/logs and combined URL logging, including password-change query values. Source confirms server.ts public mounting and morgan('combined'); no actual live password in logs is asserted."
+        },
+        {
+          "id": "19",
+          "text": "Admin area guarded only client-side / admin REST without role check",
+          "anchor": "frontend routes, server.ts",
+          "challenges": "adminSection",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-004 (report.md:53\u201360) identifies Users/authentication-details requiring any JWT rather than admin, enabling ordinary customer enumeration. This satisfies the row's 'admin REST without role check' alternative; source confirms generic authorization middleware without a role gate."
+        },
+        {
+          "id": "20",
+          "text": "Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse)",
+          "anchor": "server.ts Feedback REST, routes/verify.ts, routes/captcha.ts",
+          "challenges": "feedback, forgedFeedback, zeroStars, captchaBypass",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-004 identifies public forged UserId feedback creation and any-customer deletion; WSA-036 identifies exposed CAPTCHA answers and replay. Source confirms Feedback item JWT-only policy and CAPTCHA verification without consumption. Zero-star behavior is not explicitly covered, but a substantive class/sink hit is present."
+        },
+        {
+          "id": "21",
+          "text": "Basket read by ID without ownership check",
+          "anchor": "routes/basket.ts",
+          "challenges": "basketAccess",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-006 (report.md:73\u201379) identifies routes/basket.ts:19 selecting basket by requested ID without owner, despite token middleware. The report names the precise owner-check omission."
+        },
+        {
+          "id": "22",
+          "text": "Basket item add with BasketId from body / duplicate key parsing",
+          "anchor": "routes/basketItems.ts",
+          "challenges": "basketManipulate",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-007 (report.md:81\u201387) identifies raw duplicate JSON parsing in routes/basketItems.ts, first BasketId authorization and later BasketId insertion. This directly addresses the row rather than generic basket IDOR."
+        },
+        {
+          "id": "23",
+          "text": "Product review author taken from body / update without author check",
+          "anchor": "routes/createProductReviews.ts, routes/updateProductReviews.ts",
+          "challenges": "forgedReview",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-008 identifies public review creation storing request author/message and authenticated update selecting only id with no author predicate. Source independently confirms both handlers and mounts."
+        },
+        {
+          "id": "24",
+          "text": "Product PUT allowed for non-admin",
+          "anchor": "server.ts Products REST",
+          "challenges": "changeProduct",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-004 Products row states update authentication is commented out at server.ts:393, allowing anonymous product changes. Source confirms the missing PUT gate and generated Products CRUD."
+        },
+        {
+          "id": "25",
+          "text": "CSRF on profile update (form POST accepted cross-origin, no token)",
+          "anchor": "routes/updateUserProfile.ts",
+          "challenges": "csrf",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-031 (report.md:265\u2013271) identifies cookie-authenticated POST /profile via updateUserProfile.ts, URL-encoded bodies and missing CSRF/origin policy. Cookie-delivery/SameSite prerequisites are explicitly bounded."
+        },
+        {
+          "id": "26",
+          "text": "SSRF via profile image URL fetch",
+          "anchor": "routes/profileImageUrlUpload.ts",
+          "challenges": "ssrf",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-025 (report.md:221\u2013227) identifies routes/profileImageUrlUpload.ts:24 fetch(url) without destination, redirect or network policy and a public response-body file. Source confirms the fetch/persistence flow; no cloud-specific result is invented."
+        },
+        {
+          "id": "27",
+          "text": "Weak / hard-coded seed credentials and test accounts",
+          "anchor": "data/static/users.yml, frontend",
+          "challenges": "weakPassword, exposedCredentials, loginSupport, loginAmy, loginRapper",
+          "passed": false,
+          "score": 0,
+          "evidence": "No weak/hard-coded seed account or frontend test credential is identified. Data initialization coverage explicitly says remaining seed rows are not a full credential audit. WSA-046 weak user-chosen password policy and WSA-011 deterministic OAuth credentials are distinct mechanisms."
+        },
+        {
+          "id": "28",
+          "text": "Password reset by security question, no rate limit, guessable answers",
+          "anchor": "routes/resetPassword.ts",
+          "challenges": "resetPassword* (6), geoStalking*",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-012 (report.md:119\u2013125) identifies email plus security answer as sufficient reset authority, publicly returned configured answers used by datacreator, and no fresh one-use recovery proof. WSA-037 bounds the actual 100-per-five-minute reset limiter and forwarded-IP weakness rather than falsely asserting no limiter. Source confirms reset, configuration export and seed linkage."
+        },
+        {
+          "id": "29",
+          "text": "OAuth login derives password from base64(reversed email) client-side",
+          "anchor": "frontend oauth component, routes/login.ts",
+          "challenges": "oauthUserPassword",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-011 (report.md:111\u2013117) identifies frontend OAuth password as Base64(reversed email), then local registration/login; knows-email password recovery is stated with MFA limitation."
+        },
+        {
+          "id": "30",
+          "text": "Change password skips current-password check when param absent (GET params)",
+          "anchor": "routes/changePassword.ts",
+          "challenges": "changePasswordBender",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-013 identifies query current/new/repeat on a GET and truthy-only current password comparison. Source independently confirms currentPassword && hash(...) and subsequent mutation for cached token identity."
+        },
+        {
+          "id": "31",
+          "text": "TOTP secret stored in plaintext in users table",
+          "anchor": "routes/2fa.ts, models/user.ts",
+          "challenges": "twoFactorAuthUnsafeSecretStorage",
+          "passed": false,
+          "score": 0,
+          "evidence": "WSA-010/016/044 identify disclosure of usable TOTP seeds in models, JWTs and whoami, but do not identify plaintext-at-rest storage as a root cause or cite the setup assignment to the ordinary Users string column. Source confirms that storage flaw exists; it is not credited from grader discovery. Strict distinct-mechanism decision; coordinator may judge implicit seed disclosure sufficient. Coordinator adjudication: retain the conservative distinction between seed disclosure and an explicit plaintext-at-rest root cause, equally for both reports. Source knowledge supplied by the grader cannot fill that report omission."
+        },
+        {
+          "id": "32",
+          "text": "Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys",
+          "anchor": "lib/insecurity.ts",
+          "challenges": "weirdCrypto, passwordHashLeak (hash returned by whoami/Users)",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-014 identifies unsalted MD5 password hashing and source-fixed HMAC key in lib/insecurity.ts; WSA-002 covers embedded RSA key; WSA-010 covers returned hashes. Source confirms MD5/HMAC and user setter; class and sinks match."
+        },
+        {
+          "id": "33",
+          "text": "JWT: alg none / RSA public key confusion accepted, legacy express-jwt",
+          "anchor": "lib/insecurity.ts, package.json",
+          "challenges": "jwtUnsigned, jwtForged",
+          "passed": false,
+          "score": 0,
+          "evidence": "Not identified as an established vulnerability. 'Legacy dependency hypotheses' explicitly withholds algorithm confusion; JWT section says algorithm-confusion behavior unresolved. WSA-002 key theft and WSA-015/016 lifecycle/purpose flaws are different mechanisms and do not satisfy alg-none/RSA-public-key acceptance."
+        },
+        {
+          "id": "34",
+          "text": "Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key)",
+          "anchor": "encryptionkeys/, lib/insecurity.ts, routes/premiumReward.ts, routes/easterEgg.ts",
+          "challenges": "premiumPaywall, easterEggLevelTwo, nftUnlock (private key)",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-002 identifies the hard-coded reusable RSA private key in lib/insecurity.ts and its identical public Terraform copy; WSA-024 identifies public /encryptionkeys. Independently normalized key material matches and server public source serving does not redact it. Credit for embedded/shipped secret-key class; premium AES/ctf.key/easter-egg specifics are absent."
+        },
+        {
+          "id": "35",
+          "text": "Prometheus /metrics unauthenticated",
+          "anchor": "routes/metrics.ts, server.ts",
+          "challenges": "exposedMetrics",
+          "passed": true,
+          "score": 1,
+          "evidence": "Positive controls/unresolved leads, 'Metrics/errors' (report.md:428), explicitly says '/metrics is public' and emits operational/business aggregates, names server.ts:696, and recommends restricting diagnostics. Source confirms unguarded metrics mount and register.metrics(); a numbered High finding is not required."
+        },
+        {
+          "id": "36",
+          "text": "Verbose error handler / stack traces in responses",
+          "anchor": "server.ts errorhandler",
+          "challenges": "errorHandling",
+          "passed": true,
+          "score": 1,
+          "evidence": "Same 'Metrics/errors' paragraph identifies always-installed development-style errorhandler at server.ts:702 exposing diagnostic details; WSA-019 also traces parser content into public errors. Source confirms unconditional errorhandler(). No runtime stack capture is required by a source-review rubric."
+        },
+        {
+          "id": "37",
+          "text": "XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL",
+          "anchor": "frontend search/product/track-result/administration/last-login-ip, routes/saveLoginIp.ts, routes/videoHandler.ts, routes/userProfile.ts, package.json",
+          "challenges": "localXss, xssBonus, reflectedXss, restfulXss, persistedXssUser, persistedXssFeedback, httpHeaderXss, videoXss, usernameXss",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-029 (report.md:249\u2013263) traces search q, tracking order ID, product description, admin email and True-Client-IP to explicit Angular trust bypasses and HTML rendering. WSA-020 covers subtitle-to-script extension and unresolved leads cover profile CSP. Multiple correct class/sink pairs satisfy this bundled row; exact sanitizer bypass is correctly not claimed verified."
+        },
+        {
+          "id": "38",
+          "text": "Open redirect allowlist uses substring match",
+          "anchor": "lib/insecurity.ts isRedirectAllowed, routes/redirect.ts",
+          "challenges": "redirect, redirectCryptoCurrency",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-042 (report.md:363\u2013369) identifies isRedirectAllowed substring acceptance and routes/redirect.ts, with a trusted URL embedded in attacker query as example. Source independently confirms includes(allowedUrl)."
+        },
+        {
+          "id": "39",
+          "text": "JSONP whoami callback leaks email cross-origin",
+          "anchor": "routes/currentUser.ts",
+          "challenges": "emailLeak",
+          "passed": true,
+          "score": 1,
+          "evidence": "WSA-044 (report.md:380\u2013386) identifies cookie-authenticated currentUser.ts JSONP callback exposing user fields cross-origin, with SameSite/cookie prerequisites. Source confirms default email projection, caller field selection and res.jsonp."
+        },
+        {
+          "id": "40",
+          "text": "Known-vulnerable / typosquatted dependencies pinned in manifests",
+          "anchor": "package.json, frontend/package.json, Dockerfile",
+          "challenges": "knownVulnerableComponent, typosquattingNpm, typosquattingAngular, supplyChainAttack, csaf, vulnerableDockerImage",
+          "passed": false,
+          "score": 0,
+          "evidence": "No established vulnerable/typosquatted dependency is identified. The legacy-dependency paragraph explicitly keeps old manifest versions as unresolved hypotheses and no typosquatted package is named. Conservative calibration is good, but does not satisfy detection."
+        }
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "Juice Shop root causes",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 33,
+        "total": 40,
+        "pass_rate": 0.825,
+        "weighted_score": 33
+      },
+      "expectations": [
+        {
+          "id": "1",
+          "text": "SQL injection in login (string-built query)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F01: routes/login.ts:33 'interpolates req.body.email into a SQL literal'; result controls account selection/token issuance."
+        },
+        {
+          "id": "2",
+          "text": "SQL injection in product search",
+          "passed": true,
+          "score": 1,
+          "evidence": "F02: routes/search.ts:20-22 inserts q into LIKE expressions and returns query results; explicitly identifies SQL injection and database disclosure."
+        },
+        {
+          "id": "3",
+          "text": "NoSQL injection in review update (operator/$where injection)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F15: routes/updateProductReviews.ts:16-19 uses untyped body id in a multi:true query; 'an operator-shaped ID can broaden the query'. Runtime operator support is appropriately qualified."
+        },
+        {
+          "id": "4",
+          "text": "NoSQL injection in order tracking",
+          "passed": true,
+          "score": 1,
+          "evidence": "F16: routes/trackOrder.ts:15-18 inserts a URL ID into a quoted $where JavaScript expression; predicate manipulation can select extra orders."
+        },
+        {
+          "id": "5",
+          "text": "NoSQL $where sleep / injection in review listing",
+          "passed": true,
+          "score": 1,
+          "evidence": "F16: routes/showProductReviews.ts:31-36 concatenates ID into $where and :17-25 installs blocking sleep; identifies predicate manipulation and CPU blocking."
+        },
+        {
+          "id": "6",
+          "text": "SSTI / code execution via username rendered in pug template",
+          "passed": true,
+          "score": 1,
+          "evidence": "F22: routes/userProfile.ts:57-65 extracts #{...} code from username, calls eval, and inserts result into Pug source before compilation at :90."
+        },
+        {
+          "id": "7",
+          "text": "Sandboxed eval of B2B order payload (RCE / DoS)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F29: routes/b2bOrder.ts:18-32 evaluates caller code through notevil with a two-second timeout; repeated expensive expressions can block event loop. No unsupported sandbox escape claimed."
+        },
+        {
+          "id": "8",
+          "text": "YAML parsing of uploads (yaml bomb)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F29: routes/fileUpload.ts:103-127 calls JSON.stringify(yaml.load(data)); explicitly identifies nested/aliased document expansion, memory and event-loop exhaustion."
+        },
+        {
+          "id": "9",
+          "text": "XXE in XML upload (noent)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F26: routes/fileUpload.ts:77-83 sends uploaded XML to lib/xml.ts:19-35 with filesystem providers and NOENT/DTDLOAD; process-readable entity content can enter error response."
+        },
+        {
+          "id": "10",
+          "text": "Zip slip in zip upload handling",
+          "passed": true,
+          "score": 1,
+          "evidence": "F25: routes/fileUpload.ts:27-35 checks project-path substring then writes archive-controlled path under uploads/complaints; parent segments escape intended root."
+        },
+        {
+          "id": "11",
+          "text": "Upload size/type enforced client-side or after processing",
+          "passed": false,
+          "score": 0,
+          "evidence": "F28 identifies a different uploadToDisk memory-upload route lacking size limits. F45 cites fileUpload.ts:62-68 for arbitrary MIME labels in metrics, but does not identify complaint size/type validation as pass-through bookkeeping, the 100000-vs-200000 limit mismatch, or client-side-only enforcement. Correct general upload concerns are present, but the specified root cause is not established. Borderline broader-class interpretation recorded separately."
+        },
+        {
+          "id": "12",
+          "text": "Mass assignment on user registration (role, etc.)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F10: server.ts registration does not allowlist fields, verify.ts:52-56 passes through, and models/user.ts:76-95 persists privileged roles; login signs supplied role."
+        },
+        {
+          "id": "13",
+          "text": "Weak server-side registration validation (empty email/password, repeat check client-only)",
+          "passed": false,
+          "score": 0,
+          "evidence": "F10 covers role mass assignment, not missing email/password validity or server-side repeat validation. No finding names empty registration or client-only password-repeat enforcement."
+        },
+        {
+          "id": "14",
+          "text": "Negative quantity / price manipulation in basket & order",
+          "passed": true,
+          "score": 1,
+          "evidence": "F31: basketItems.ts:87-101 checks only upper bounds; basketitem model lacks positive constraint; order.ts subtracts negative inventory quantities and multiplies them into price/wallet totals."
+        },
+        {
+          "id": "15",
+          "text": "Deluxe membership payment bypass",
+          "passed": true,
+          "score": 1,
+          "evidence": "F32: routes/deluxe.ts:24-40 tests only wallet/card strings; other paymentMode values fall through to role upgrade/token issuance."
+        },
+        {
+          "id": "16",
+          "text": "Coupon codes forgeable (z85, no secret) / expiry not enforced",
+          "passed": true,
+          "score": 1,
+          "evidence": "F30: lib/insecurity.ts:97-118 uses unsigned Z85 month/discount; coupon/order handlers apply it; alternative campaign trusts caller timestamp instead of server date."
+        },
+        {
+          "id": "17",
+          "text": "Null byte / path filter bypass and directory listing on /ftp",
+          "passed": true,
+          "score": 1,
+          "evidence": "F37: fileServer.ts checks suffix then truncates literal %00, allowing backup.ext%00.pdf to target backup.ext. F36 identifies public FTP directory index at server.ts:288-303."
+        },
+        {
+          "id": "18",
+          "text": "Access logs served publicly",
+          "passed": true,
+          "score": 1,
+          "evidence": "F08/F36: server.ts:301-303 publicly serves support logs; combined logging at :364 retains password-change URLs."
+        },
+        {
+          "id": "19",
+          "text": "Admin area guarded only client-side / admin REST without role check",
+          "passed": true,
+          "score": 1,
+          "evidence": "F11: frontend AdminGuard cannot protect HTTP; generated user listing and administrative operations use generic auth without roles."
+        },
+        {
+          "id": "20",
+          "text": "Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F11 identifies generic-auth Feedback DELETE without role restriction; F12 identifies body-controlled UserId on public Feedback POST; F38 identifies reusable exposed CAPTCHA answers. Zero-star case not discussed, but several mechanisms in this grouped root are established."
+        },
+        {
+          "id": "21",
+          "text": "Basket read by ID without ownership check",
+          "passed": true,
+          "score": 1,
+          "evidence": "F13: routes/basket.ts:18-19 reads URL ID after authentication without proving owner."
+        },
+        {
+          "id": "22",
+          "text": "Basket item add with BasketId from body / duplicate key parsing",
+          "passed": true,
+          "score": 1,
+          "evidence": "F14: utils.ts preserves duplicate keys; basketItems.ts authorizes first BasketId but persists last, permitting cross-user addition."
+        },
+        {
+          "id": "23",
+          "text": "Product review author taken from body / update without author check",
+          "passed": true,
+          "score": 1,
+          "evidence": "F15: createProductReviews.ts:23-28 stores body author; updateProductReviews.ts lacks author predicate, permitting cross-user edits."
+        },
+        {
+          "id": "24",
+          "text": "Product PUT allowed for non-admin",
+          "passed": true,
+          "score": 1,
+          "evidence": "F11 and API matrix: server.ts:391-394 has product PUT authorization commented out; anonymous product updates are explicitly identified."
+        },
+        {
+          "id": "25",
+          "text": "CSRF on profile update (form POST accepted cross-origin, no token)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F24: updateUserProfile.ts cookie authentication, server.ts form-urlencoded support, absent CSRF/Origin rejection; qualifies modern SameSite restrictions."
+        },
+        {
+          "id": "26",
+          "text": "SSRF via profile image URL fetch",
+          "passed": true,
+          "score": 1,
+          "evidence": "F21: profileImageUrlUpload.ts:18-30 fetches arbitrary imageUrl without destination/redirect restrictions and saves response in public upload directory."
+        },
+        {
+          "id": "27",
+          "text": "Weak / hard-coded seed credentials and test accounts",
+          "passed": false,
+          "score": 0,
+          "evidence": "Seed-user datasets explicitly excluded; no weak/static seed or frontend test-account credential finding. F07 deterministic OAuth passwords is a different root cause."
+        },
+        {
+          "id": "28",
+          "text": "Password reset by security question, no rate limit, guessable answers",
+          "passed": true,
+          "score": 1,
+          "evidence": "F39: resetPassword.ts:35-46 relies on reusable knowledge answer; recovery-question enumeration and spoofable IP-based limiter described. It correctly acknowledges an IP limiter rather than literally claiming none; F36 additionally identifies exposed recovery-answer configuration."
+        },
+        {
+          "id": "29",
+          "text": "OAuth login derives password from base64(reversed email) client-side",
+          "passed": true,
+          "score": 1,
+          "evidence": "F07: oauth.component.ts:29-36 registers base64(reversed email) and :46-47 logs in with it; backend verifies no provider assertion."
+        },
+        {
+          "id": "30",
+          "text": "Change password skips current-password check when param absent (GET params)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F08: changePassword.ts:39 checks current password only if supplied and reads credentials from GET query at :14-17."
+        },
+        {
+          "id": "31",
+          "text": "TOTP secret stored in plaintext in users table",
+          "passed": false,
+          "score": 0,
+          "evidence": "F09 identifies readable totpSecret in complete UserModel fields and responses/JWTs, states exposed seeds compromise second factor, and calls for protected TOTP storage. It does not use the word plaintext or separately identify the database write, but identifies unprotected model-held seeds and their disclosure. Source models/user.ts defines a plain STRING without encryption. Broad semantic match recorded as ambiguous. Coordinator adjudication: retain the conservative distinction between seed disclosure and an explicit plaintext-at-rest root cause, equally for both reports. Source knowledge supplied by the grader cannot fill that report omission."
+        },
+        {
+          "id": "32",
+          "text": "Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys",
+          "passed": true,
+          "score": 1,
+          "evidence": "F06: lib/insecurity.ts:41 plain unsalted MD5 and :42 shared source HMAC key. F03 identifies source-embedded RSA private signing key."
+        },
+        {
+          "id": "33",
+          "text": "JWT: alg none / RSA public key confusion accepted, legacy express-jwt",
+          "passed": false,
+          "score": 0,
+          "evidence": "F04 lists old JWT libraries and missing algorithm allowlist but explicitly says acceptance of none or RSA/HMAC confusion is 'not independently established'. Different token-purpose flaws and known private key do not establish this root."
+        },
+        {
+          "id": "34",
+          "text": "Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key)",
+          "passed": true,
+          "score": 1,
+          "evidence": "F03 identifies hard-coded private key in lib/insecurity.ts and served Terraform; F36 identifies public encryptionkeys directory and key handlers. Source verification confirmed matching key material after normalizing source escapes. Specific premium/ctf keys not inspected; grouped root credit for exposed shipped key material."
+        },
+        {
+          "id": "35",
+          "text": "Prometheus /metrics unauthenticated",
+          "passed": true,
+          "score": 1,
+          "evidence": "F36 identifies anonymous /metrics at server.ts:696 and routes/metrics.ts, disclosing process and business metrics."
+        },
+        {
+          "id": "36",
+          "text": "Verbose error handler / stack traces in responses",
+          "passed": true,
+          "score": 1,
+          "evidence": "F36 identifies unconditional errorhandler() at server.ts:702 and developer details returned; formatting is explicitly dependency-qualified."
+        },
+        {
+          "id": "37",
+          "text": "XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL",
+          "passed": true,
+          "score": 1,
+          "evidence": "F18 traces search query and reflected orderId to bypassSecurityTrustHtml/innerHTML; F19 traces product/email/IP trust bypasses; F23 CSP interpolation; subtitle follow-up names raw VTT script injection. Sanitizer exploit is left unconfirmed. Multiple actual sinks satisfy this grouped root."
+        },
+        {
+          "id": "38",
+          "text": "Open redirect allowlist uses substring match",
+          "passed": false,
+          "score": 0,
+          "evidence": "No finding identifies isRedirectAllowed substring matching or open redirect. Reading redirect/security helpers in process/scope is not detection evidence."
+        },
+        {
+          "id": "39",
+          "text": "JSONP whoami callback leaks email cross-origin",
+          "passed": true,
+          "score": 1,
+          "evidence": "F24 identifies currentUser.ts:54-58 authenticated JSONP and cross-origin script reads when eligible cookies are sent; F09 describes unconstrained fields. Source confirms standard response includes email."
+        },
+        {
+          "id": "40",
+          "text": "Known-vulnerable / typosquatted dependencies pinned in manifests",
+          "passed": false,
+          "score": 0,
+          "evidence": "Additional observations explicitly leave dependency verification open and assert no vulnerability from version strings. No concrete vulnerable/typosquatted component finding is substantiated; outdated JWT pins alone do not establish this row."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "WebGoat platform",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 12,
+        "total": 12,
+        "pass_rate": 1.0,
+        "weighted_score": 12
+      },
+      "expectations": [
+        {
+          "id": "A1",
+          "text": "WebWolf file upload writes `multipartFile.getOriginalFilename()` resolved under `fileLocation/<username>` with no normalisation, after `Files.deleteIfExists`: path traversal write and delete by any WebWolf user | `webwolf/FileServer.java` `importFile` (`destinationDir.toPath().resolve(getOriginalFilename())`) | Names the unnormalised filename resolve (not just \"upload lacks type check\")",
+          "passed": true,
+          "score": 1,
+          "evidence": "report.md P10: originalFilename is checked only for emptiness; lines 91\u201393 resolve it under a user directory, delete the destination and copy bytes without containment. Explicit write/delete traversal primitive."
+        },
+        {
+          "id": "A2",
+          "text": "`POST /mail` is `permitAll` and `MailboxController.sendEmail` stores a client-supplied recipient/sender/contents: anyone, unauthenticated, plants mail in any user's mailbox | `container/WebSecurityConfig.java` (`requestMatchers(HttpMethod.POST, \"/mail\").permitAll()`), `container/mailbox/MailboxController.java` | Both the permitAll and the arbitrary recipient",
+          "passed": true,
+          "score": 1,
+          "evidence": "P07: WebSecurityConfig permits anonymous POST /mail, and MailboxController accepts/stores arbitrary recipient/body fields. Explicit unauthenticated selection of learner/admin recipient."
+        },
+        {
+          "id": "A3",
+          "text": "Mailbox renders `mail.contents` with `th:utext`: stored XSS on the WebGoat origin, reachable unauthenticated through A2, against any user including `webgoat-admin` (CSRF is disabled, so the admin API is scriptable) | `webgoat/templates/mailbox.html` (`<pre th:utext=\"${mail.contents}\">`) | Names the unescaped render; chaining to A2 or to admin impact is a bonus, not required",
+          "passed": true,
+          "score": 1,
+          "evidence": "P07: mailbox.html:142 uses th:utext for mail.contents, chained to anonymous delivery and same-origin administrator actions. Browser reproduction is correctly distinguished from the source sink."
+        },
+        {
+          "id": "A4",
+          "text": "`DELETE /mail` calls `mailboxRepository.deleteAll()`: any authenticated user deletes every user's mail | `MailboxController.deleteAllMail` | Names the cross-user scope",
+          "passed": true,
+          "score": 1,
+          "evidence": "P06: MailboxController.deleteAll() lacks a principal predicate; authenticated learner can destroy every user mailbox, contrasted with owner-scoped GET/count."
+        },
+        {
+          "id": "A5",
+          "text": "CSRF protection disabled in both security chains and all security headers disabled in WebGoat | `container/WebSecurityConfig.java` (`csrf.disable()`, `headers.disable()`), `webwolf/WebSecurityConfig.java` | Reported as platform configuration **and** labelled as deliberate for the lessons (see D5 for the severity side)",
+          "passed": true,
+          "score": 1,
+          "evidence": "P05 identifies CSRF disable in both security chains; P14 identifies WebGoat headers disable. P05 calls for explicit exemptions/isolation of intended CSRF lessons, and the CSRF lesson inventory calls them deliberate request demonstrations. This supplies the required training-purpose context."
+        },
+        {
+          "id": "A6",
+          "text": "Passwords stored and compared in plaintext: `NoOpPasswordEncoder` beans in both chains, `web_goat_user.password` plain, admin password reset returns the temporary password in the response | both `WebSecurityConfig.java`, `container/users/AdminController.resetPassword` | Names `NoOpPasswordEncoder`",
+          "passed": true,
+          "score": 1,
+          "evidence": "P04 explicitly names NoOpPasswordEncoder in both chains and direct credential storage; P01 identifies administrator reset returning the replacement password."
+        },
+        {
+          "id": "A7",
+          "text": "Default credentials re-seeded on every start: `webgoat-admin`/`webgoat` with `WEBGOAT_ADMIN`, `webgoat-user`/`webgoat`; the admin password is forced back to the default even after a reset | `container/users/DefaultUserInitializer.java` | Names the initializer and the admin role",
+          "passed": true,
+          "score": 1,
+          "evidence": "P01 names DefaultUserInitializer and explains fixed administrator credential saved with admin role even when the account exists, reinstating access after restart. Secret literals are intentionally omitted, but the initializer and role/mechanism are clear."
+        },
+        {
+          "id": "A8",
+          "text": "Actuator `env`, `configprops` and `health` (details always) exposed and `/actuator/**` is `permitAll`: unauthenticated environment and configuration disclosure (OAuth client secret, keystore password when set through environment) | `application-webgoat.properties` (`management.endpoints.web.exposure.include=env, health,configprops`), `container/WebSecurityConfig.java` | Both the exposure list and the permitAll. The simulated `/SecurityMisconfiguration/task3/actuator/*` endpoints are a lesson, not this",
+          "passed": true,
+          "score": 1,
+          "evidence": "P14 identifies env, health, configprops plus detailed health and permitAll /actuator/**. It limits impact to configuration/topology and explicitly says this is not a proven unmasked secret dump. Full credit under the frozen A8 addendum."
+        },
+        {
+          "id": "A9",
+          "text": "Stack traces always included in error responses for both applications | `application-webgoat.properties` (`spring.web.error.include-stacktrace=always`), `application-webwolf.properties` (`server.error.include-stacktrace=always`) | Either file",
+          "passed": true,
+          "score": 1,
+          "evidence": "P14 states both properties files request stack traces at line 1; correctly notes the WebWolf HTML error template itself does not display them."
+        },
+        {
+          "id": "A10",
+          "text": "Progress credited to another account: `LessonTrackerInterceptor.realUsername` strips a `csrf-` prefix, and `UserForm` allows registering `csrf-<victim>` (`[a-z0-9-]*`, 6 to 45 chars), so an attacker's solves and failures are written to the victim's progress | `container/assignments/LessonTrackerInterceptor.java`, `container/users/UserForm.java` | Both halves; the prefix alone without the registration pattern is 0.5",
+          "passed": true,
+          "score": 1,
+          "evidence": "P09 combines UserForm lowercase/digits/hyphens, exact-name uniqueness, and LessonTrackerInterceptor stripping csrf- before loading/saving progress. Explicit prefixed-account corruption of another learner\u2019s progress."
+        },
+        {
+          "id": "A11",
+          "text": "WebWolf request catcher: `/landing/**` and `POST /requests` are unauthenticated; `Requests.allowedTrace` hides other users' traces only by substring match on the username; `requests.html` renders the trace path and JSON with `th:utext`, so a request to `/landing?<script>` executes when the owner views it | `webwolf/requests/Requests.java`, `webwolf/templates/requests.html`, `webwolf/WebSecurityConfig.java` | Either the cross-user visibility or the unescaped render",
+          "passed": true,
+          "score": 1,
+          "evidence": "P12 identifies global traces and allowedTrace username/reversed-username substring scoping; P13 additionally names th:utext for path and JSON. Either mechanism meets the row."
+        },
+        {
+          "id": "A12",
+          "text": "DOM XSS in the WebGoat shell: Backbone route `test/:param` writes the fragment parameter with `.html('test:' + param)` | `webgoat/static/js/goatApp/view/GoatRouter.js` (`'test/:param'`), `LessonContentView.js` (`.html('test:' + param)`) | Names the route or the sink; it serves the DOM XSS lesson, so labelling it by-design is acceptable if the location is right",
+          "passed": true,
+          "score": 1,
+          "evidence": "Lesson inventory XSS names GoatRouter test/:param and LessonContentView .html('test:'+param), with the shared privileged UI origin noted elsewhere."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "WebGoat challenges",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 6,
+        "total": 7,
+        "pass_rate": 0.8571428571428571,
+        "weighted_score": 6.5
+      },
+      "expectations": [
+        {
+          "id": "B1",
+          "text": "Challenge 1: `ImageServlet.logo()` writes the four-digit `PINCODE` into fixed byte offsets of the PNG served at `/challenge/logo`; `Assignment1` accepts `admin` with `SolutionConstants.PASSWORD` where `1234` is replaced by that pincode | `lessons/challenges/challenge1/ImageServlet.java`, `Assignment1.java`, `SolutionConstants.java` | The image side-channel; the hardcoded password constant alone is 0.5",
+          "passed": false,
+          "score": 0.5,
+          "evidence": "Challenges C01 names Assignment1 fixed password/PIN and ImageServlet creating a four-digit PIN and serving its image. It does not explain PIN bytes embedded at fixed offsets in the PNG or extraction as the side-channel; full source inspection confirms those writes. Partial credit for the right classes/password/PIN area."
+        },
+        {
+          "id": "B2",
+          "text": "Challenge 5: username and password concatenated into the SQL text passed to `prepareStatement`: authentication bypass as `Larry` | `challenge5/Assignment5.java` | Names the concatenation despite the `PreparedStatement` wrapper",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C04: Assignment5 concatenates password before prepareStatement, explicitly warning that preparing concatenated text is not binding. Correct SQL bypass mechanism despite restricted username."
+        },
+        {
+          "id": "B3",
+          "text": "Challenge 7: `PasswordResetLink.createPasswordReset` seeds `java.util.Random` with `key.length()` for `admin`, then scrambles an MD5 of the username: the admin reset token is deterministic (and `ADMIN_PASSWORD_LINK` is a constant) | `challenge7/PasswordResetLink.java`, `Assignment7.java` | The seeded Random or the constant link",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C05 names PasswordResetLink MD5 and Random seed derived from key length, plus fixed reset marker/replay. Meets either required mechanism."
+        },
+        {
+          "id": "B4",
+          "text": "Challenge 7: `/challenge/7/.git` serves `git.zip` from the classpath: source and history disclosure | `Assignment7.git()` | Names the endpoint",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C05: Assignment7 lines 96\u201399 exposes bundled git.zip via .git. Class, route suffix, and archive disclosure identify the endpoint even though the full /challenge/7/.git string is not reproduced."
+        },
+        {
+          "id": "B5",
+          "text": "Challenge 8: `vote` is a `@GetMapping` that refuses when `request.getMethod()` is `GET`; a `HEAD` request is dispatched to the same handler, passes the check and returns the flag in the `X-FlagController` header | `challenge8/Assignment8.java` | Names the method-check bypass (HEAD) or at least that the only guard is a method string compare",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C06 identifies GET mapping, literal GET check, other methods returning a flag header, and implicit HEAD bypass. Conditional framework wording is appropriate to a source-only audit and does not omit the mechanism."
+        },
+        {
+          "id": "B6",
+          "text": "Challenge 2, hop 1: `ChainedXmlService.newDocumentBuilder` sets `external-general-entities` to `true` and installs an `EntityResolver` that fetches the entity's system id: XXE | `challenge2/ChainedXmlService.java` | Names the enabled feature or the resolver",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C02 names ChainedXmlService external general entities enabled and custom entity resolver dispatching the supplied entity URL. Correctly bounds it to in-process lesson resolution."
+        },
+        {
+          "id": "B7",
+          "text": "Challenge 2, hops 2 and 3: `/northstar/go?url=` is an open redirect; `ChainedFetchService.fetch` checks the allowlist only on the starting URL and follows up to four redirects checking same-origin only, so a redirect to `/northstar/internal/diagnostics` is followed and the fetcher calls `diagnostic.diagnostics(state.internalToken())` with the trusted internal header, returning the flag into the XML preview | `challenge2/NorthstarEndpoints.java`, `ChainedFetchService.java`, `InternalDiagnostic.java` | The redirect-through-allowlist to the internal endpoint. Open redirect alone is 0.5",
+          "passed": true,
+          "score": 1,
+          "evidence": "Challenges C02 explains initial feed/redirect allowlist, subsequent redirect reaching internal diagnostics with state.internalToken(), and diagnostic flag returned through XML. C03 names NorthstarEndpoints open redirect. Direct source inspection confirms this is simulated dispatch rather than arbitrary network SSRF."
+        }
+      ]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "WebGoat lesson coverage",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 32,
+        "total": 34,
+        "pass_rate": 0.9411764705882353,
+        "weighted_score": 33.0
+      },
+      "expectations": [
+        {
+          "id": "C1",
+          "text": "sqlinjection/introduction | String-concatenated queries: `SqlInjectionLesson5a` (`WHERE userid = '\" + accountName + \"'`), `5b` (`userid= \" + accountName` inside a `PreparedStatement` text), `8`, `9`, `10`. Any one with its file",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL introduction names SqlInjectionLesson5a/5b/8/9/10 and concatenated fragments/accountName/name/TAN/search input. Concrete query sink files are provided."
+        },
+        {
+          "id": "C2",
+          "text": "sqlinjection/introduction | Lessons 2, 3, 4, 5 execute the full user-supplied query string (`statement.executeQuery(query)`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL introduction names SqlInjectionLesson2, 3, 4 and 5 executing supplied query/SQL."
+        },
+        {
+          "id": "C3",
+          "text": "sqlinjection/advanced | `SqlInjectionLesson6a.injectableQuery` concatenates `userid` (UNION). `6b` runs a fixed query and compares the submitted answer; it is not a sink (corrected after the first grading, see `evals/README.md`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL advanced names SqlInjectionLesson6a constructing and executing SQL, and explicitly identifies 6b as a fixed-query answer verifier."
+        },
+        {
+          "id": "C4",
+          "text": "sqlinjection/advanced | `SqlInjectionChallenge.registerNewUser`: `checkUserQuery` concatenates `username_reg` (blind SQLi in registration) while the INSERT is parameterised; `SqlInjectionChallengeLogin` is parameterised and must not be flagged (D3)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL advanced names SqlInjectionChallenge registration username concatenation and blind branching; parameterized insert/login are preserved as negative controls."
+        },
+        {
+          "id": "C5",
+          "text": "sqlinjection/mitigation | `Servers.sort`: `order by \" + column` inside a `PreparedStatement` (ORDER BY injection)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL mitigation names Servers concatenating ORDER BY before preparing, with structural allowlisting remediation."
+        },
+        {
+          "id": "C6",
+          "text": "sqlinjection/mitigation | `SqlOnlyInputValidation` (rejects spaces only) and `SqlOnlyInputValidationOnKeywords` (single-pass `replace(\"FROM\",\"\")`/`\"SELECT\"`): filter bypass with comments or nested keywords",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL mitigation names SqlOnlyInputValidation space rejection and SqlOnlyInputValidationOnKeywords removal of uppercase keywords before vulnerable execution; identifies insufficient denylist validation."
+        },
+        {
+          "id": "C7",
+          "text": "jwt | `Jwts.parser().setSigningKey(..).parse(token)` on jjwt 0.9.1 accepts unsigned `alg: none` tokens: `JWTVotesEndpoint` (`getVotes`, `vote`, `resetVotes`) and `JWTRefreshEndpoint.checkout`",
+          "passed": false,
+          "score": 0.5,
+          "evidence": "JWT signatures/claims names JWTVotesEndpoint generic parsing and admin claim reset, but says exact unsigned-token acceptance is library-dependent/unreproduced. It never identifies alg:none acceptance on the pinned jjwt 0.9.1 or the checkout sink. Partial for the correct parser area and signature concern, rather than the specific accepted-unsigned-token mechanism."
+        },
+        {
+          "id": "C8",
+          "text": "jwt | `JWTSecretKeyEndpoint`: HS256 key chosen from five dictionary words (`SECRETS`): offline brute force then forge",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT signatures/claims names JWTSecretKeyEndpoint tiny signing-key dictionary and remediation using trusted key/algorithm. Sufficient weak-secret mechanism and correct file; precise five-word count is unnecessary."
+        },
+        {
+          "id": "C9",
+          "text": "jwt | `JWTRefreshEndpoint.newToken`: refresh token not bound to a user, user claim read from an expired token (`ExpiredJwtException.getClaims()`), tokens issued for any `user`; hardcoded `PASSWORD`/`JWT_PASSWORD`",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT refresh names JWTRefreshEndpoint listed refresh tokens paired with independently parsed/expired subject claims and replacement issuance, explicitly noting absent original-subject/session binding."
+        },
+        {
+          "id": "C10",
+          "text": "jwt | `JWTHeaderKIDEndpoint`: `kid` header concatenated into `SELECT key FROM jwt_keys WHERE id = '...'`: SQL injection controls the verification key",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT kid SQL names JWTHeaderKIDEndpoint unverified kid concatenated into SQL before verification with the returned key."
+        },
+        {
+          "id": "C11",
+          "text": "jwt | `JWTHeaderJKUEndpoint`: `jku` header URL fetched without an allowlist (`JwkProviderBuilder(new URL(jku))`): attacker-hosted JWKS verifies a forged RS256 token (also SSRF)",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT jku trust/SSRF names JWTHeaderJKUEndpoint building URL provider from unverified jku, fetching kid, and trusting that key. Explicit attacker-selected outbound JWKS/key trust."
+        },
+        {
+          "id": "C12",
+          "text": "xxe | `CommentsCache.parseXml(xml, false)`: `XMLInputFactory` with external entities enabled (the two `ACCESS_EXTERNAL_*` properties are only cleared when `securityEnabled`); used by `/xxe/simple`, `/xxe/content-type` (XML branch) and `/xxe/blind`; `Ping` logs the exfiltrated text",
+          "passed": true,
+          "score": 1,
+          "evidence": "XXE names CommentsCache parser, secure-only external resolution disable, and SimpleXXE/ContentTypeAssignment/BlindSendFileAssignment passing supplied XML in unsafe mode. Correct source sink and setting distinction."
+        },
+        {
+          "id": "C13",
+          "text": "pathtraversal | `ProfileUploadBase.execute`: `new File(uploadDirectory, fullName)` with the user's `fullName`; `ProfileUploadFix` single-pass `replace(\"../\", \"\")`; `ProfileUploadRemoveUserInput` uses `getOriginalFilename()`. Any one",
+          "passed": true,
+          "score": 1,
+          "evidence": "Profile writes names ProfileUploadBase path/copy before canonical grading, ProfileUploadFix one-pass ../ removal and ProfileUploadRemoveUserInput multipart originalFilename."
+        },
+        {
+          "id": "C14",
+          "text": "pathtraversal | `ProfileUploadRetrieval.getProfilePicture`: `id` into `new File(catPicturesDirectory, id + \".jpg\")`; the guard inspects only the raw query string for `..` and `/`, so URL-encoding bypasses it; the 404 branch lists the directory",
+          "passed": true,
+          "score": 1,
+          "evidence": "Profile reads names ProfileUploadRetrieval raw-query check, decoded parameter, image path/read and parent listing, explicitly explaining raw/decoded traversal mismatch."
+        },
+        {
+          "id": "C15",
+          "text": "pathtraversal | `ProfileZipSlip.processZipUpload`: `new File(tmpZipDirectory, e.getName())` for each zip entry without a canonical-path check (zip slip)",
+          "passed": true,
+          "score": 1,
+          "evidence": "ZIP extraction names ProfileZipSlip entry-name resolution and replacement copy as unconstrained path sinks."
+        },
+        {
+          "id": "C16",
+          "text": "deserialization | `InsecureDeserializationTask`: `ObjectInputStream.readObject()` on base64 input with no filter; gadget `org.dummy.insecure.framework.VulnerableTaskHolder.readObject` runs `Runtime.getRuntime().exec(taskAction)`",
+          "passed": true,
+          "score": 1,
+          "evidence": "Native deserialization names InsecureDeserializationTask Base64/readObject before type check and VulnerableTaskHolder command execution in readObject. Correctly distinguishes Runtime.exec(String) from shell execution and bounds supplied gadget conditions."
+        },
+        {
+          "id": "C17",
+          "text": "vulnerablecomponents | `new XStream()` with no allowlist and `fromXML(payload)` on XStream 1.4.5 (`pom.xml`): RCE through known gadgets",
+          "passed": true,
+          "score": 1,
+          "evidence": "Vulnerable components names VulnerableComponentsLesson XStream fromXML(payload) before cast with no application type allowlist and manifest XStream 1.4.5. Runtime gadget feasibility is appropriately left untested."
+        },
+        {
+          "id": "C18",
+          "text": "commandinjection | `CommandExecutionService.execute` runs `/bin/sh -c` / `cmd.exe /c` on concatenated input: `CommandInjectionTask2.buildCommand` (`base + payload`), `Task3Service.buildCommand` (`\"grep \" + title`), `Task4Service` (single-pass token replace filter). Any one",
+          "passed": true,
+          "score": 1,
+          "evidence": "Command injection names Task2/Task3Service/Task4Service input concatenation and CommandExecutionService shell/process execution."
+        },
+        {
+          "id": "C19",
+          "text": "csrf | Lesson endpoints depend on the global CSRF disable (A5): `ForgedReviews` uses a fixed shared `weakAntiCSRF` value and a referer-host compare; `CSRFFeedback` accepts JSON as `text/plain` (simple request)",
+          "passed": true,
+          "score": 1,
+          "evidence": "CSRF names ForgedReviews weak token/referrer grading after persistence and CSRFFeedback parsing JSON independent of content type; connects platform P05/P09 and deliberate cross-site/simple-request behavior."
+        },
+        {
+          "id": "C20",
+          "text": "idor | `IDORViewOtherProfile` (`GET /IDOR/profile/{userId}`) and `IDOREditOtherProfile` (`PUT`, writes `role` and `color`) without an ownership check",
+          "passed": true,
+          "score": 1,
+          "evidence": "IDOR names IDORViewOtherProfile supplied-ID lookup and IDOREditOtherProfile trusting role/color into lesson state, identifying absent owner scope."
+        },
+        {
+          "id": "C21",
+          "text": "missingac | `MissingFunctionACUsers`: `GET access-control/users` (JSON) returns every user with a password-derived hash to any authenticated user, `POST` creates users (including `admin`) without authorisation; only `users-admin-fix` checks `isAdmin()`; hidden admin menu items are client-side only",
+          "passed": true,
+          "score": 1,
+          "evidence": "Missing access control names MissingFunctionACUsers unprotected list and body-driven admin flag POST, contrasted with protected admin GET. Password-derived hash/menu specifics omitted, but central unauthorized-read/write mechanism and sink are identified."
+        },
+        {
+          "id": "C22",
+          "text": "authbypass | `AccountVerificationHelper.verifyAccount` validates only the answers whose keys are present: two renamed `secQuestion*` parameters pass",
+          "passed": true,
+          "score": 1,
+          "evidence": "Authentication bypass names AccountVerificationHelper requiring two entries while checking expected keys only when present; unrelated matching-name keys bypass answer checks."
+        },
+        {
+          "id": "C23",
+          "text": "htmltampering, bypassrestrictions | Server trusts client-side constraints: `HtmlTamperingTask` accepts the client's `Total`; `BypassRestrictionsFieldRestrictions` relies on HTML field limits",
+          "passed": false,
+          "score": 0.5,
+          "evidence": "Client restrictions/HTML tampering names HtmlTamperingTask client quantity/total comparison and server recalculation requirement. The bypassrestrictions half is only a package-level reference to handlers; BypassRestrictionsFieldRestrictions is not tied to the field-limit mechanism in the report. Partial under strict sink-location requirement for this combined row."
+        },
+        {
+          "id": "C24",
+          "text": "clientsidefiltering | `Salaries` returns every employee including SSN and salary for client-side filtering; `ShopEndpoint /coupons` lists all codes including the 100 percent coupon",
+          "passed": true,
+          "score": 1,
+          "evidence": "Client-side filtering names Salaries salary/SSN fixture responses and ShopEndpoint all coupons including UI-hidden coupon, identifying server-response disclosure."
+        },
+        {
+          "id": "C25",
+          "text": "hijacksession | `HijackSessionAuthenticationProvider`: session id is an incrementing counter plus epoch millis (predictable); `hijack_cookie` without `HttpOnly`",
+          "passed": true,
+          "score": 1,
+          "evidence": "Hijacked session names HijackSessionAuthenticationProvider incrementing/timestamp tokens and predictable bearer token authentication. HttpOnly detail omitted, but the principal predictability mechanism/file is present."
+        },
+        {
+          "id": "C26",
+          "text": "spoofcookie | `EncDec`: reversible encoding (lowercase + salt, reverse, hex, base64): a user forges `tom`'s cookie from their own",
+          "passed": true,
+          "score": 1,
+          "evidence": "Spoofed cookie names EncDec reverse/hex/Base64 with fixed padding, and SpoofCookieAssignment trusting decoded identity; explicitly notes lack of MAC/signature permits identity tampering."
+        },
+        {
+          "id": "C27",
+          "text": "httpparameterpollution | `ParameterPollutionTransfer` authorises `recipients[0]` and pays `recipients[last]`",
+          "passed": true,
+          "score": 1,
+          "evidence": "Parameter pollution names ParameterPollutionTransfer validating first recipient but selecting last recipient."
+        },
+        {
+          "id": "C28",
+          "text": "openredirect | `OpenRedirectRealRedirect`: `\"redirect:\" + url` from the request; the flawed filters in `Task2` (`contains(\"webgoat\")`), `Task3` (userinfo `@`), `Task4` (double decode) are the same class",
+          "passed": true,
+          "score": 1,
+          "evidence": "Open redirect names OpenRedirectRealRedirect arbitrary redirect and distinguishes simulated tasks from fixed-map secure sibling."
+        },
+        {
+          "id": "C29",
+          "text": "passwordreset | `ResetLinkAssignmentForgotPassword`: reset link built from the `Host` header (host header poisoning); `QuestionsAssignment`: guessable favourite-colour question",
+          "passed": true,
+          "score": 1,
+          "evidence": "Password reset names ResetLinkAssignmentForgotPassword request Host in reset mail and QuestionsAssignment low-entropy answers. Correctly bounds simulated click behavior."
+        },
+        {
+          "id": "C30",
+          "text": "xss | `CrossSiteScriptingLesson5a` reflects `field1` into the HTML output; `StoredXssComments` stores comment text that the client renders unescaped",
+          "passed": true,
+          "score": 1,
+          "evidence": "XSS names CrossSiteScriptingLesson5a card field HTML insertion and StoredXssComments storage plus stored-xss.js HTML append, with accurate per-user storage qualification."
+        },
+        {
+          "id": "C31",
+          "text": "logging | `LogSpoofingTask` writes the raw username (newlines) into the log line; `LogBleedingTask` logs the admin password (base64) at INFO on startup",
+          "passed": true,
+          "score": 1,
+          "evidence": "Logging names LogSpoofingTask newline-to-br HTML output and explicitly rejects a real logger write; LogBleedingTask actually logs Base64 demo secret at INFO. Source inspection confirms the report corrects an inaccurate rubric premise: LogSpoofingTask has no logger invocation. Credit for accurate sink mapping rather than requiring a false claim."
+        },
+        {
+          "id": "C32",
+          "text": "cryptography | `SigningAssignment.getprivate` returns the private key; `InsecureHmacValidator.matches` compares byte by byte with early exit and a per-byte delay (timing oracle behind `/crypto/timing/verify*`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Cryptography names SigningAssignment returning training private key; Timing names InsecureHmacValidator early mismatch exit and per-byte sleep plus exposed oracle. Both core mechanisms/files present."
+        },
+        {
+          "id": "C33",
+          "text": "webauthn | `WebAuthnAuthenticationAssignment.finishAuthentication` removes the session challenge and never compares it with `clientData.challenge()` (the `SecurityKeyCeremonyEndpoints` sibling does): the assertion served by `/WebAuthn/support-ticket` replays as Jerry; `RelyingParty.from` derives rpId and origin from `request.getServerName()`",
+          "passed": true,
+          "score": 1,
+          "evidence": "WebAuthn replay names WebAuthnAuthenticationAssignment removing but not comparing issued challenge and captured assertion in GoatBankCeremonyEndpoints. Strong sibling checks are contrasted. RelyingParty Host-derived rpId detail omitted, but principal replay mechanism is fully mapped."
+        },
+        {
+          "id": "C34",
+          "text": "securitymisconfiguration | Simulated endpoints return hardcoded secrets: `ActuatorExposureTask` (`INTERNAL-API-KEY-987`), `VerboseErrorTask` (`DB_PASSWORD`, `STAGING-TOKEN-42`), `DefaultCredentialsTask` (`admin`/`admin`). Any one, labelled as the lesson's fixtures",
+          "passed": true,
+          "score": 1,
+          "evidence": "Security misconfiguration names VerboseErrorTask fake trace, ActuatorExposureTask mock diagnostics, and DefaultCredentialsTask fixture credentials, explicitly separating them from real platform diagnostics/defaults."
+        }
+      ]
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "WebGoat calibration",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 5,
+        "total": 6,
+        "pass_rate": 0.8333333333333334,
+        "weighted_score": 5
+      },
+      "expectations": [
+        {
+          "id": "D1",
+          "text": "`SSRFTask2.furBall` only opens `new URL(url)` after an exact match on `http://ifconfig.pro`; `SSRFTask1` is simulated. The report does not claim an open SSRF in the SSRF lesson (saying the sink is gated, or omitting it, both pass)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SSRF-labeled tasks says SSRFTask1 is fixed HTML/no network and SSRFTask2 permits exact http://ifconfig.pro; explicitly rejects arbitrary internal-target SSRF."
+        },
+        {
+          "id": "D2",
+          "text": "`UserService.createLessonsForUser` (`CREATE SCHEMA \"<username>\"`) and `LessonConnectionInvocationHandler` (`SET SCHEMA \"<username>\"`) concatenate the username, which `UserForm` restricts to `[a-z0-9-]*`. Not reported as SQL injection, or reported with the validation named and severity held down",
+          "passed": true,
+          "score": 1,
+          "evidence": "P03 reports shared DB-principal isolation, not username SQL injection. Registration syntax is a positive control and P09 names permitted characters. No schema-concatenation SQLi claim is made."
+        },
+        {
+          "id": "D3",
+          "text": "`SqlInjectionChallengeLogin` and `SqlInjectionLesson13` use parameters; `MissingFunctionACUsers.usersFixed` checks admin; `OpenRedirectSecureController` uses an allowlist map. None flagged",
+          "passed": true,
+          "score": 1,
+          "evidence": "Report explicitly preserves parameterized advanced login/SqlInjectionLesson13, the admin-checking MissingFunctionACUsers sibling, and fixed-map OpenRedirectSecureController; none is flagged as the corresponding vulnerability."
+        },
+        {
+          "id": "D4",
+          "text": "The report separates by-design lesson behaviour from platform defects explicitly (a scope statement, a section split or a per-finding label)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Separate Platform findings, Challenges-package findings and Lesson inventory sections; repeated explanations distinguish platform identities/effects from intended lesson fixtures."
+        },
+        {
+          "id": "D5",
+          "text": "A5 (CSRF off), A6 (no password encoder) and the pinned XStream 1.4.5 / jjwt 0.9.1 are reported as deliberate training configuration with bounded severity, not as standalone Critical exploits of the lesson endpoints",
+          "passed": false,
+          "score": 0,
+          "evidence": "P05 and XStream are framed with training-purpose exceptions/lesson bounds, and no standalone Critical claim is made. However P04 treats NoOpPasswordEncoder solely as a platform defect without explicitly labeling it deliberate training configuration, and the report does not state the jjwt 0.9.1 pin. The conjunctive positive calibration expectation is not fully met; failure is an explicit-label omission, not a severity overclaim."
+        },
+        {
+          "id": "D6",
+          "text": "The WebWolf JWT tool (`webwolf/jwt/JWTController`, `JWTToken` with `setSkipAllValidators`) is a decoding utility, not a JWT verification flaw",
+          "passed": true,
+          "score": 1,
+          "evidence": "WebWolf JWT is described architecturally as a utility. No claim that its decoder skip-all-validators behavior is a verification vulnerability appears in report.md or drafting report."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "WebGoat platform",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 12,
+        "total": 12,
+        "pass_rate": 1.0,
+        "weighted_score": 12
+      },
+      "expectations": [
+        {
+          "id": "A1",
+          "text": "WebWolf file upload writes `multipartFile.getOriginalFilename()` resolved under `fileLocation/<username>` with no normalisation, after `Files.deleteIfExists`: path traversal write and delete by any WebWolf user | `webwolf/FileServer.java` `importFile` (`destinationDir.toPath().resolve(getOriginalFilename())`) | Names the unnormalised filename resolve (not just \"upload lacks type check\")",
+          "passed": true,
+          "score": 1,
+          "evidence": "P08: FileServer.java:91 resolves the multipart original filename without containment validation; lines 92\u201393 delete then copy. Explicit traversal/absolute-path write/delete impact."
+        },
+        {
+          "id": "A2",
+          "text": "`POST /mail` is `permitAll` and `MailboxController.sendEmail` stores a client-supplied recipient/sender/contents: anyone, unauthenticated, plants mail in any user's mailbox | `container/WebSecurityConfig.java` (`requestMatchers(HttpMethod.POST, \"/mail\").permitAll()`), `container/mailbox/MailboxController.java` | Both the permitAll and the arbitrary recipient",
+          "passed": true,
+          "score": 1,
+          "evidence": "P05: WebSecurityConfig.java:50\u201351 permits anonymous POST /mail; MailboxController.java:58\u201364 saves attacker-selected recipient, sender, title and contents."
+        },
+        {
+          "id": "A3",
+          "text": "Mailbox renders `mail.contents` with `th:utext`: stored XSS on the WebGoat origin, reachable unauthenticated through A2, against any user including `webgoat-admin` (CSRF is disabled, so the admin API is scriptable) | `webgoat/templates/mailbox.html` (`<pre th:utext=\"${mail.contents}\">`) | Names the unescaped render; chaining to A2 or to admin impact is a bonus, not required",
+          "passed": true,
+          "score": 1,
+          "evidence": "P05: mailbox.html:142 renders mail.contents with th:utext; describes unauthenticated mail to a chosen user and administrator-origin impact."
+        },
+        {
+          "id": "A4",
+          "text": "`DELETE /mail` calls `mailboxRepository.deleteAll()`: any authenticated user deletes every user's mail | `MailboxController.deleteAllMail` | Names the cross-user scope",
+          "passed": true,
+          "score": 1,
+          "evidence": "P06: DELETE /mail calls repository-wide deleteAll() without a principal/recipient/admin check; explicitly erases every mailbox."
+        },
+        {
+          "id": "A5",
+          "text": "CSRF protection disabled in both security chains and all security headers disabled in WebGoat | `container/WebSecurityConfig.java` (`csrf.disable()`, `headers.disable()`), `webwolf/WebSecurityConfig.java` | Reported as platform configuration **and** labelled as deliberate for the lessons (see D5 for the severity side)",
+          "passed": true,
+          "score": 1,
+          "evidence": "P12 identifies CSRF disabled in both chains; P17 identifies all WebGoat security headers disabled. P12 says to \u201cisolate deliberate lesson exceptions,\u201d but does not explicitly label the existing global configuration itself deliberate for teaching; P17 likewise recommends scoping future unsafe teaching behavior. Strict explicit-label requirement held at half credit. Broader interpretation of the remediation wording would award 1. Coordinator adjudication: full credit. P12 explicitly says to isolate deliberate lesson exceptions, alongside the two disabled security chains and P17 disabled headers. This is substantively the same labeling accepted in the with-skill remediation; section placement does not remove the acknowledged lesson purpose."
+        },
+        {
+          "id": "A6",
+          "text": "Passwords stored and compared in plaintext: `NoOpPasswordEncoder` beans in both chains, `web_goat_user.password` plain, admin password reset returns the temporary password in the response | both `WebSecurityConfig.java`, `container/users/AdminController.resetPassword` | Names `NoOpPasswordEncoder`",
+          "passed": true,
+          "score": 1,
+          "evidence": "P02 names NoOpPasswordEncoder in both WebSecurityConfig classes and unchanged password persistence. Full hit criterion is naming NoOpPasswordEncoder; the temporary admin reset response is not separately described."
+        },
+        {
+          "id": "A7",
+          "text": "Default credentials re-seeded on every start: `webgoat-admin`/`webgoat` with `WEBGOAT_ADMIN`, `webgoat-user`/`webgoat`; the admin password is forced back to the default even after a reset | `container/users/DefaultUserInitializer.java` | Names the initializer and the admin role",
+          "passed": true,
+          "score": 1,
+          "evidence": "P01 names DefaultUserInitializer, webgoat-admin/webgoat, restoration on every run, ordinary bootstrap account, and WEBGOAT_ADMIN authority."
+        },
+        {
+          "id": "A8",
+          "text": "Actuator `env`, `configprops` and `health` (details always) exposed and `/actuator/**` is `permitAll`: unauthenticated environment and configuration disclosure (OAuth client secret, keystore password when set through environment) | `application-webgoat.properties` (`management.endpoints.web.exposure.include=env, health,configprops`), `container/WebSecurityConfig.java` | Both the exposure list and the permitAll. The simulated `/SecurityMisconfiguration/task3/actuator/*` endpoints are a lesson, not this",
+          "passed": true,
+          "score": 1,
+          "evidence": "P16 names env/health/configprops exposure, detailed DB health and /actuator/** permitAll. Explicitly warns \u201cDo not infer cleartext environment secrets.\u201d Full credit under A8 addendum; no secret-value overclaim."
+        },
+        {
+          "id": "A9",
+          "text": "Stack traces always included in error responses for both applications | `application-webgoat.properties` (`spring.web.error.include-stacktrace=always`), `application-webwolf.properties` (`server.error.include-stacktrace=always`) | Either file",
+          "passed": true,
+          "score": 1,
+          "evidence": "P16 identifies application-webgoat.properties:1 stacktrace inclusion and WebWolf legacy property with runtime caveat. Either file suffices."
+        },
+        {
+          "id": "A10",
+          "text": "Progress credited to another account: `LessonTrackerInterceptor.realUsername` strips a `csrf-` prefix, and `UserForm` allows registering `csrf-<victim>` (`[a-z0-9-]*`, 6 to 45 chars), so an attacker's solves and failures are written to the victim's progress | `container/assignments/LessonTrackerInterceptor.java`, `container/users/UserForm.java` | Both halves; the prefix alone without the registration pattern is 0.5",
+          "passed": true,
+          "score": 1,
+          "evidence": "P13 traces LessonTrackerInterceptor.realUsername stripping csrf- to victim progress writes, and UserForm lowercase/digit/hyphen registration with no reserved prefix; bounds username length."
+        },
+        {
+          "id": "A11",
+          "text": "WebWolf request catcher: `/landing/**` and `POST /requests` are unauthenticated; `Requests.allowedTrace` hides other users' traces only by substring match on the username; `requests.html` renders the trace path and JSON with `th:utext`, so a request to `/landing?<script>` executes when the owner views it | `webwolf/requests/Requests.java`, `webwolf/templates/requests.html`, `webwolf/WebSecurityConfig.java` | Either the cross-user visibility or the unescaped render",
+          "passed": true,
+          "score": 1,
+          "evidence": "P10 identifies requests.html th:utext for JSON/path; P11 traces Requests.allowedTrace default allow and substring ownership. Both alternatives covered, with recording/header runtime caveats."
+        },
+        {
+          "id": "A12",
+          "text": "DOM XSS in the WebGoat shell: Backbone route `test/:param` writes the fragment parameter with `.html('test:' + param)` | `webgoat/static/js/goatApp/view/GoatRouter.js` (`'test/:param'`), `LessonContentView.js` (`.html('test:' + param)`) | Names the route or the sink; it serves the DOM XSS lesson, so labelling it by-design is acceptable if the location is right",
+          "passed": true,
+          "score": 1,
+          "evidence": "Lesson inventory DOM XSS row traces GoatRouter test/:param through LessonController to LessonContentView .html('test:' + param); correctly locates common-shell sink."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "WebGoat challenges",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 7,
+        "total": 7,
+        "pass_rate": 1.0,
+        "weighted_score": 7
+      },
+      "expectations": [
+        {
+          "id": "B1",
+          "text": "Challenge 1: `ImageServlet.logo()` writes the four-digit `PINCODE` into fixed byte offsets of the PNG served at `/challenge/logo`; `Assignment1` accepts `admin` with `SolutionConstants.PASSWORD` where `1234` is replaced by that pincode | `lessons/challenges/challenge1/ImageServlet.java`, `Assignment1.java`, `SolutionConstants.java` | The image side-channel; the hardcoded password constant alone is 0.5",
+          "passed": true,
+          "score": 1,
+          "evidence": "C01 names ImageServlet, 10,000-range PIN and PNG offsets 32\u201335, returned publicly, then Assignment1 check. Image side-channel fully described despite intentionally not opening SolutionConstants."
+        },
+        {
+          "id": "B2",
+          "text": "Challenge 5: username and password concatenated into the SQL text passed to `prepareStatement`: authentication bypass as `Larry` | `challenge5/Assignment5.java` | Names the concatenation despite the `PreparedStatement` wrapper",
+          "passed": true,
+          "score": 1,
+          "evidence": "C02 Assignment5:40\u201346 concatenates password before prepareStatement/execute; expressly says preparation does not parameterize the text, and correctly bounds username input."
+        },
+        {
+          "id": "B3",
+          "text": "Challenge 7: `PasswordResetLink.createPasswordReset` seeds `java.util.Random` with `key.length()` for `admin`, then scrambles an MD5 of the username: the admin reset token is deterministic (and `ADMIN_PASSWORD_LINK` is a constant) | `challenge7/PasswordResetLink.java`, `Assignment7.java` | The seeded Random or the constant link",
+          "passed": true,
+          "score": 1,
+          "evidence": "C03 names PasswordResetLink predictably seeded Random plus MD5 and Assignment7:32 constant accepted admin reset link. Either seeded Random or constant suffices."
+        },
+        {
+          "id": "B4",
+          "text": "Challenge 7: `/challenge/7/.git` serves `git.zip` from the classpath: source and history disclosure | `Assignment7.git()` | Names the endpoint",
+          "passed": true,
+          "score": 1,
+          "evidence": "C03 says Assignment7.java:96\u201399 serves a packaged .git archive; exact /challenge/7/.git endpoint is never named. Source confirms the cited handler is correct. Strict \u201cNames the endpoint\u201d requirement earns half; treating class/line plus .git as endpoint identification would award 1. Coordinator adjudication: full credit. Challenge 7 section C03 names Assignment7.java:96-99 and its deliberate packaged .git archive serving. This identifies the endpoint and source-disclosure mechanism unambiguously; the rubric does not require a verbatim full URL string."
+        },
+        {
+          "id": "B5",
+          "text": "Challenge 8: `vote` is a `@GetMapping` that refuses when `request.getMethod()` is `GET`; a `HEAD` request is dispatched to the same handler, passes the check and returns the flag in the `X-FlagController` header | `challenge8/Assignment8.java` | Names the method-check bypass (HEAD) or at least that the only guard is a method string compare",
+          "passed": true,
+          "score": 1,
+          "evidence": "C05 names Assignment8 GET mapping, actual-method GET-only rejection, inferred HEAD dispatch and flag response header; appropriately says no runtime test."
+        },
+        {
+          "id": "B6",
+          "text": "Challenge 2, hop 1: `ChainedXmlService.newDocumentBuilder` sets `external-general-entities` to `true` and installs an `EntityResolver` that fetches the entity's system id: XXE | `challenge2/ChainedXmlService.java` | Names the enabled feature or the resolver",
+          "passed": true,
+          "score": 1,
+          "evidence": "C06 ChainedXmlService:55 enables general external entities; :63\u201365 installs custom resolver, :85 dispatches system ID and :92 returns fetched text. Correctly distinguishes bounded simulated fetch from arbitrary I/O."
+        },
+        {
+          "id": "B7",
+          "text": "Challenge 2, hops 2 and 3: `/northstar/go?url=` is an open redirect; `ChainedFetchService.fetch` checks the allowlist only on the starting URL and follows up to four redirects checking same-origin only, so a redirect to `/northstar/internal/diagnostics` is followed and the fetcher calls `diagnostic.diagnostics(state.internalToken())` with the trusted internal header, returning the flag into the XML preview | `challenge2/NorthstarEndpoints.java`, `ChainedFetchService.java`, `InternalDiagnostic.java` | The redirect-through-allowlist to the internal endpoint. Open redirect alone is 0.5",
+          "passed": true,
+          "score": 1,
+          "evidence": "C06 traces initial feed/go allowlist, redirect to internal/diagnostics and call using state internal token; C07 identifies NorthstarEndpoints redirect Location from url. Source confirms same-origin bounded Java dispatcher. This is the required full chain, not open redirect alone."
+        }
+      ]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "WebGoat lesson coverage",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 34,
+        "total": 34,
+        "pass_rate": 1.0,
+        "weighted_score": 34
+      },
+      "expectations": [
+        {
+          "id": "C1",
+          "text": "sqlinjection/introduction | String-concatenated queries: `SqlInjectionLesson5a` (`WHERE userid = '\" + accountName + \"'`), `5b` (`userid= \" + accountName` inside a `PreparedStatement` text), `8`, `9`, `10`. Any one with its file",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL string/numeric inventory names SqlInjectionLesson5a and 5b and concatenation into JDBC SQL despite PreparedStatement."
+        },
+        {
+          "id": "C2",
+          "text": "sqlinjection/introduction | Lessons 2, 3, 4, 5 execute the full user-supplied query string (`statement.executeQuery(query)`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL introduction inventory names SqlInjectionLesson2/3/4/5 with full supplied SQL executed through Statement APIs."
+        },
+        {
+          "id": "C3",
+          "text": "sqlinjection/advanced | `SqlInjectionLesson6a.injectableQuery` concatenates `userid` (UNION). `6b` runs a fixed query and compares the submitted answer; it is not a sink (corrected after the first grading, see `evals/README.md`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Advanced SQL row names SqlInjectionLesson6a UNION query manipulation. Counterexamples row expressly excludes 6b fixed-query answer comparison."
+        },
+        {
+          "id": "C4",
+          "text": "sqlinjection/advanced | `SqlInjectionChallenge.registerNewUser`: `checkUserQuery` concatenates `username_reg` (blind SQLi in registration) while the INSERT is parameterised; `SqlInjectionChallengeLogin` is parameterised and must not be flagged (D3)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Advanced SQL row names SqlInjectionChallenge registration/existence-query injection and contrasts bound INSERT. Counterexamples expressly recognize bound SqlInjectionChallengeLogin."
+        },
+        {
+          "id": "C5",
+          "text": "sqlinjection/mitigation | `Servers.sort`: `order by \" + column` inside a `PreparedStatement` (ORDER BY injection)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL mitigation failures names Servers.java:41\u201350 ORDER BY identifier concatenation and recommends fixed column mapping."
+        },
+        {
+          "id": "C6",
+          "text": "sqlinjection/mitigation | `SqlOnlyInputValidation` (rejects spaces only) and `SqlOnlyInputValidationOnKeywords` (single-pass `replace(\"FROM\",\"\")`/`\"SELECT\"`): filter bypass with comments or nested keywords",
+          "passed": true,
+          "score": 1,
+          "evidence": "SQL mitigation failures names both SqlOnlyInputValidation and SqlOnlyInputValidationOnKeywords, literal-space rejection and uppercase keyword stripping. Describes incomplete denylisting and alternate whitespace/case, sufficient actual filter mechanism without an exploit payload."
+        },
+        {
+          "id": "C7",
+          "text": "jwt | `Jwts.parser().setSigningKey(..).parse(token)` on jjwt 0.9.1 accepts unsigned `alg: none` tokens: `JWTVotesEndpoint` (`getVotes`, `vote`, `resetVotes`) and `JWTRefreshEndpoint.checkout`",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT votes row names JWTVotesEndpoint generic JWT parser and inferred unsecured JWT acceptance; JWT refresh row identifies explicit none exercise in JWTRefreshEndpoint. Does not state jjwt 0.9.1, but names actual parser mechanism/classes and appropriately qualifies runtime inference."
+        },
+        {
+          "id": "C8",
+          "text": "jwt | `JWTSecretKeyEndpoint`: HS256 key chosen from five dictionary words (`SECRETS`): offline brute force then forge",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT weak secret row names JWTSecretKeyEndpoint small dictionary, offline guessing and forging-relevant strong-key remediation."
+        },
+        {
+          "id": "C9",
+          "text": "jwt | `JWTRefreshEndpoint.newToken`: refresh token not bound to a user, user claim read from an expired token (`ExpiredJwtException.getClaims()`), tokens issued for any `user`; hardcoded `PASSWORD`/`JWT_PASSWORD`",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT refresh row names JWTRefreshEndpoint global valid refresh list, membership not bound to expired access-token subject, and replacement issuance. Primary confused-identity mechanism covered; hardcoded password names omitted."
+        },
+        {
+          "id": "C10",
+          "text": "jwt | `JWTHeaderKIDEndpoint`: `kid` header concatenated into `SELECT key FROM jwt_keys WHERE id = '...'`: SQL injection controls the verification key",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT kid SQL injection row names JWTHeaderKIDEndpoint and concatenated kid SQL selecting verification material before signature validation."
+        },
+        {
+          "id": "C11",
+          "text": "jwt | `JWTHeaderJKUEndpoint`: `jku` header URL fetched without an allowlist (`JwkProviderBuilder(new URL(jku))`): attacker-hosted JWKS verifies a forged RS256 token (also SSRF)",
+          "passed": true,
+          "score": 1,
+          "evidence": "JWT jku trust/SSRF row names JWTHeaderJKUEndpoint, header-controlled URL to JwkProviderBuilder and fetched key verifying same token."
+        },
+        {
+          "id": "C12",
+          "text": "xxe | `CommentsCache.parseXml(xml, false)`: `XMLInputFactory` with external entities enabled (the two `ACCESS_EXTERNAL_*` properties are only cleared when `securityEnabled`); used by `/xxe/simple`, `/xxe/content-type` (XML branch) and `/xxe/blind`; `Ping` logs the exfiltrated text",
+          "passed": true,
+          "score": 1,
+          "evidence": "XML external entities row names CommentsCache and all three callers, securityEnabled=false omitting external-access controls. Source confirms controls conditional rather than an explicit enable call; provider caveat is accurate. Ping exfil logging is not separately reported."
+        },
+        {
+          "id": "C13",
+          "text": "pathtraversal | `ProfileUploadBase.execute`: `new File(uploadDirectory, fullName)` with the user's `fullName`; `ProfileUploadFix` single-pass `replace(\"../\", \"\")`; `ProfileUploadRemoveUserInput` uses `getOriginalFilename()`. Any one",
+          "passed": true,
+          "score": 1,
+          "evidence": "Filename/full-name traversal row names ProfileUploadBase, ProfileUploadFix single-pass ../ removal, and ProfileUploadRemoveUserInput originalFilename; real uncontained file writes."
+        },
+        {
+          "id": "C14",
+          "text": "pathtraversal | `ProfileUploadRetrieval.getProfilePicture`: `id` into `new File(catPicturesDirectory, id + \".jpg\")`; the guard inspects only the raw query string for `..` and `/`, so URL-encoding bypasses it; the 404 branch lists the directory",
+          "passed": true,
+          "score": 1,
+          "evidence": "Encoded retrieval traversal row names ProfileUploadRetrieval, raw-query filter versus decoded id, .jpg append and directory-list fallback."
+        },
+        {
+          "id": "C15",
+          "text": "pathtraversal | `ProfileZipSlip.processZipUpload`: `new File(tmpZipDirectory, e.getName())` for each zip entry without a canonical-path check (zip slip)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Zip Slip row names ProfileZipSlip entry-name joins and copies without containment."
+        },
+        {
+          "id": "C16",
+          "text": "deserialization | `InsecureDeserializationTask`: `ObjectInputStream.readObject()` on base64 input with no filter; gadget `org.dummy.insecure.framework.VulnerableTaskHolder.readObject` runs `Runtime.getRuntime().exec(taskAction)`",
+          "passed": true,
+          "score": 1,
+          "evidence": "Java deserialization row names InsecureDeserializationTask ObjectInputStream.readObject before instanceof/no filter and VulnerableTaskHolder readObject Runtime.exec gadget; bounds actual exec command behavior."
+        },
+        {
+          "id": "C17",
+          "text": "vulnerablecomponents | `new XStream()` with no allowlist and `fromXML(payload)` on XStream 1.4.5 (`pom.xml`): RCE through known gadgets",
+          "passed": true,
+          "score": 1,
+          "evidence": "Vulnerable component row names VulnerableComponentsLesson XStream.fromXML on attacker input, no type allowlist and pom.xml XStream 1.4.5; gadget exploitability qualified rather than falsely claiming tested RCE."
+        },
+        {
+          "id": "C18",
+          "text": "commandinjection | `CommandExecutionService.execute` runs `/bin/sh -c` / `cmd.exe /c` on concatenated input: `CommandInjectionTask2.buildCommand` (`base + payload`), `Task3Service.buildCommand` (`\"grep \" + title`), `Task4Service` (single-pass token replace filter). Any one",
+          "passed": true,
+          "score": 1,
+          "evidence": "Command task 2 row names CommandInjectionTask2 submitted command/payload through CommandExecutionService real shell; tasks 3/4 additionally trace title into shell grep/findstr and token denylist."
+        },
+        {
+          "id": "C19",
+          "text": "csrf | Lesson endpoints depend on the global CSRF disable (A5): `ForgedReviews` uses a fixed shared `weakAntiCSRF` value and a referer-host compare; `CSRFFeedback` accepts JSON as `text/plain` (simple request)",
+          "passed": true,
+          "score": 1,
+          "evidence": "CSRF reviews/login/feedback row names ForgedReviews hardcoded/Referer checks and mutation before check; CSRFFeedback string-parsed JSON admits text/plain. P12 gives global disable."
+        },
+        {
+          "id": "C20",
+          "text": "idor | `IDORViewOtherProfile` (`GET /IDOR/profile/{userId}`) and `IDOREditOtherProfile` (`PUT`, writes `role` and `color`) without an ownership check",
+          "passed": true,
+          "score": 1,
+          "evidence": "IDOR row names IDORViewOtherProfile and IDOREditOtherProfile: path-selected profile lacks owner check and role/color fields mutate fixture."
+        },
+        {
+          "id": "C21",
+          "text": "missingac | `MissingFunctionACUsers`: `GET access-control/users` (JSON) returns every user with a password-derived hash to any authenticated user, `POST` creates users (including `admin`) without authorisation; only `users-admin-fix` checks `isAdmin()`; hidden admin menu items are client-side only",
+          "passed": true,
+          "score": 1,
+          "evidence": "Missing function access control row names MissingFunctionACUsers list disclosure without role authorization and unguarded admin-field user creation, including adminfix POST. Source confirms POST differs from protected usersFixed GET. Password-derived hash and hidden-menu detail are omitted, but primary unauthorized list/create mechanisms and location are present."
+        },
+        {
+          "id": "C22",
+          "text": "authbypass | `AccountVerificationHelper.verifyAccount` validates only the answers whose keys are present: two renamed `secQuestion*` parameters pass",
+          "passed": true,
+          "score": 1,
+          "evidence": "Authentication-question bypass names AccountVerificationHelper and VerifyAccount: only known present keys validated; two differently named secQuestion-matching keys avoid checks."
+        },
+        {
+          "id": "C23",
+          "text": "htmltampering, bypassrestrictions | Server trusts client-side constraints: `HtmlTamperingTask` accepts the client's `Total`; `BypassRestrictionsFieldRestrictions` relies on HTML field limits",
+          "passed": true,
+          "score": 1,
+          "evidence": "Frontend restriction bypass names BypassRestrictionsFieldRestrictions; HTML tampering names HtmlTamperingTask trusting submitted quantity/total. Both composite branches covered and bounded as grading fixtures."
+        },
+        {
+          "id": "C24",
+          "text": "clientsidefiltering | `Salaries` returns every employee including SSN and salary for client-side filtering; `ShopEndpoint /coupons` lists all codes including the 100 percent coupon",
+          "passed": true,
+          "score": 1,
+          "evidence": "Client-side filtering names Salaries and ShopEndpoint, all fixed salary/SSN/coupon data returned before browser filtering. Does not spell out 100 percent but main complete-data disclosure mechanism covered."
+        },
+        {
+          "id": "C25",
+          "text": "hijacksession | `HijackSessionAuthenticationProvider`: session id is an incrementing counter plus epoch millis (predictable); `hijack_cookie` without `HttpOnly`",
+          "passed": true,
+          "score": 1,
+          "evidence": "Predictable session exercise names HijackSessionAuthenticationProvider monotonic counter plus time. Missing HttpOnly detail is not reported; full credit for primary predictable-ID root cause at exact sink. Composite all-clause interpretation could reduce to half."
+        },
+        {
+          "id": "C26",
+          "text": "spoofcookie | `EncDec`: reversible encoding (lowercase + salt, reverse, hex, base64): a user forges `tom`'s cookie from their own",
+          "passed": true,
+          "score": 1,
+          "evidence": "Cookie spoofing names EncDec reversible encoding/removable salt trusted as identity without MAC and SpoofCookieAssignment. Exact encoding stages and Tom name omitted; actual identity-forgery mechanism covered."
+        },
+        {
+          "id": "C27",
+          "text": "httpparameterpollution | `ParameterPollutionTransfer` authorises `recipients[0]` and pays `recipients[last]`",
+          "passed": true,
+          "score": 1,
+          "evidence": "HTTP parameter pollution names ParameterPollutionTransfer validating first beneficiary and using last; correctly bounds this as grading, not actual bank payment."
+        },
+        {
+          "id": "C28",
+          "text": "openredirect | `OpenRedirectRealRedirect`: `\"redirect:\" + url` from the request; the flawed filters in `Task2` (`contains(\"webgoat\")`), `Task3` (userinfo `@`), `Task4` (double decode) are the same class",
+          "passed": true,
+          "score": 1,
+          "evidence": "Open redirect row names OpenRedirectRealRedirect returning redirect: plus submitted url and separate Task2/3/4 flawed checks; distinguishes secure fixed-ID controller."
+        },
+        {
+          "id": "C29",
+          "text": "passwordreset | `ResetLinkAssignmentForgotPassword`: reset link built from the `Host` header (host header poisoning); `QuestionsAssignment`: guessable favourite-colour question",
+          "passed": true,
+          "score": 1,
+          "evidence": "Reset-link poisoning row names ResetLinkAssignmentForgotPassword trusting Host; reset questions row names QuestionsAssignment static low-entropy answers. Both branches covered."
+        },
+        {
+          "id": "C30",
+          "text": "xss | `CrossSiteScriptingLesson5a` reflects `field1` into the HTML output; `StoredXssComments` stores comment text that the client renders unescaped",
+          "passed": true,
+          "score": 1,
+          "evidence": "Reflected XSS row names CrossSiteScriptingLesson5a field1 into HTML; Stored XSS row names StoredXssComments and stored-xss.js HTML append. Both covered."
+        },
+        {
+          "id": "C31",
+          "text": "logging | `LogSpoofingTask` writes the raw username (newlines) into the log line; `LogBleedingTask` logs the admin password (base64) at INFO on startup",
+          "passed": true,
+          "score": 1,
+          "evidence": "Log bleeding row names LogBleedingTask Base64 synthetic secret in real log; Log spoofing row names LogSpoofingTask newline-to-br HTML and explicitly says method does not invoke logger. Source independently confirms both. Full credit under C31 correction, not the false original premise."
+        },
+        {
+          "id": "C32",
+          "text": "cryptography | `SigningAssignment.getprivate` returns the private key; `InsecureHmacValidator.matches` compares byte by byte with early exit and a per-byte delay (timing oracle behind `/crypto/timing/verify*`)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Timing attack names InsecureHmacValidator early exit/per-byte sleep; general crypto row names SigningAssignment returning session-generated private key. Both composite branches covered."
+        },
+        {
+          "id": "C33",
+          "text": "webauthn | `WebAuthnAuthenticationAssignment.finishAuthentication` removes the session challenge and never compares it with `clientData.challenge()` (the `SecurityKeyCeremonyEndpoints` sibling does): the assertion served by `/WebAuthn/support-ticket` replays as Jerry; `RelyingParty.from` derives rpId and origin from `request.getServerName()`",
+          "passed": true,
+          "score": 1,
+          "evidence": "WebAuthn assertion replay names WebAuthnAuthenticationAssignment removal without challenge comparison, captured Jerry assertion, and contrasts stronger SecurityKeyCeremonyEndpoints checks. Does not report RelyingParty.from request-derived rpId/origin. Full primary replay mechanism credit; strict all-clauses composite interpretation could reduce to half."
+        },
+        {
+          "id": "C34",
+          "text": "securitymisconfiguration | Simulated endpoints return hardcoded secrets: `ActuatorExposureTask` (`INTERNAL-API-KEY-987`), `VerboseErrorTask` (`DB_PASSWORD`, `STAGING-TOKEN-42`), `DefaultCredentialsTask` (`admin`/`admin`). Any one, labelled as the lesson's fixtures",
+          "passed": true,
+          "score": 1,
+          "evidence": "Default credentials simulation and verbose-error/config simulation rows name DefaultCredentialsTask, VerboseErrorTask, ActuatorExposureTask and explicitly identify sample/fake/mock secrets and grading fixtures."
+        }
+      ]
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "WebGoat calibration",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 5,
+        "total": 6,
+        "pass_rate": 0.8333333333333334,
+        "weighted_score": 5
+      },
+      "expectations": [
+        {
+          "id": "D1",
+          "text": "`SSRFTask2.furBall` only opens `new URL(url)` after an exact match on `http://ifconfig.pro`; `SSRFTask1` is simulated. The report does not claim an open SSRF in the SSRF lesson (saying the sink is gated, or omitting it, both pass)",
+          "passed": true,
+          "score": 1,
+          "evidence": "SSRF inventory explicitly says task 1 only fixed HTML/no fetch and task 2 opens only exact http://ifconfig.pro; arbitrary URL fetch not claimed."
+        },
+        {
+          "id": "D2",
+          "text": "`UserService.createLessonsForUser` (`CREATE SCHEMA \"<username>\"`) and `LessonConnectionInvocationHandler` (`SET SCHEMA \"<username>\"`) concatenate the username, which `UserForm` restricts to `[a-z0-9-]*`. Not reported as SQL injection, or reported with the validation named and severity held down",
+          "passed": true,
+          "score": 1,
+          "evidence": "P03 identifies shared database privilege/isolation issue rather than SQL injection via username. P11/P13 and deployment counterevidence recognize regular-registration regex. No claim of username-concatenation injection."
+        },
+        {
+          "id": "D3",
+          "text": "`SqlInjectionChallengeLogin` and `SqlInjectionLesson13` use parameters; `MissingFunctionACUsers.usersFixed` checks admin; `OpenRedirectSecureController` uses an allowlist map. None flagged",
+          "passed": true,
+          "score": 1,
+          "evidence": "Advanced SQL counterexamples and bound mitigation example exclude SqlInjectionChallengeLogin/SqlInjectionLesson13 injection; redirect row recognizes fixed-ID allowlist. MissingAC report flags adminfix POST, not usersFixed GET; source confirms POST has no guard, so this is not a trap false positive."
+        },
+        {
+          "id": "D4",
+          "text": "The report separates by-design lesson behaviour from platform defects explicitly (a scope statement, a section split or a per-finding label)",
+          "passed": true,
+          "score": 1,
+          "evidence": "Opening scope explicitly separates deliberate lessons from platform defects, with separate platform, challenge and lesson-inventory sections and bounded fixture impact."
+        },
+        {
+          "id": "D5",
+          "text": "A5 (CSRF off), A6 (no password encoder) and the pinned XStream 1.4.5 / jjwt 0.9.1 are reported as deliberate training configuration with bounded severity, not as standalone Critical exploits of the lesson endpoints",
+          "passed": false,
+          "score": 0,
+          "evidence": "P12/P17 acknowledge teaching exceptions and XStream is in deliberate lesson inventory, but P02 labels platform plaintext High and says documented rather than explicitly deliberate training configuration; jjwt 0.9.1 pin is absent. No standalone Critical lesson exploit claimed, but all explicit-label conditions not met. This is calibration incompleteness, not a confirmed false positive."
+        },
+        {
+          "id": "D6",
+          "text": "The WebWolf JWT tool (`webwolf/jwt/JWTController`, `JWTToken` with `setSkipAllValidators`) is a decoding utility, not a JWT verification flaw",
+          "passed": true,
+          "score": 1,
+          "evidence": "Report scope says JWT utility reviewed; no WebWolf decoder/setSkipAllValidators verification vulnerability is claimed. Omission of a false claim passes this negative expectation."
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {},
+    "without_skill": {},
+    "delta": {}
+  },
+  "notes": [
+    "One fresh matched pair per target. No within-configuration variance estimate or causal claim of skill improvement.",
+    "WebGoat platform/challenges measure detection; lesson names reveal classes and the lesson score measures coverage. Calibration is separate.",
+    "Viewer pass rates count full hits only. Weighted scores, including rubric half credit, are listed in benchmark.md and grading.json.",
+    "No pooled pass rate across these different dimensions is reported.",
+    "Same retained target hashes and skill revision as October 14; upstream commit provenance and scrub limitations remain unresolved.",
+    "A8 uses the predeclared sanitization correction in grading-policy.md. Historical scores were not recomputed.",
+    "Exact execution model/settings and tokens unavailable. Timings are auditor-reported elapsed values, not comparable cost telemetry.",
+    "C31 logging source correction and final ambiguity adjudication are recorded in grading-policy.md; original independent grades are retained. Juice Shop bonus is 6/9 in each configuration."
+  ]
+}

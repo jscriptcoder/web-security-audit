@@ -1,0 +1,386 @@
+{
+  "expectations": [
+    {
+      "id": "1",
+      "text": "1: SQL injection in login (string-built query) | routes/login.ts | loginAdmin, loginBender, loginJim, ephemeralAccountant, ghostLogin",
+      "passed": true,
+      "score": 1,
+      "evidence": "F01: routes/login.ts:33 interpolates the email into SQL; explains authentication predicate manipulation."
+    },
+    {
+      "id": "2",
+      "text": "2: SQL injection in product search | routes/search.ts | dbSchema, unionSqlInjection, christmasSpecial",
+      "passed": true,
+      "score": 1,
+      "evidence": "F02: routes/search.ts:20-22 inserts q into LIKE expressions and returns database results."
+    },
+    {
+      "id": "3",
+      "text": "3: NoSQL injection in review update (operator/$where injection) | routes/updateProductReviews.ts | noSqlReviews",
+      "passed": true,
+      "score": 1,
+      "evidence": "F15: routes/updateProductReviews.ts:16-19 uses untyped body id in a multi:true query; describes operator-shaped IDs broadening updates."
+    },
+    {
+      "id": "4",
+      "text": "4: NoSQL injection in order tracking | routes/trackOrder.ts | noSqlOrders",
+      "passed": true,
+      "score": 1,
+      "evidence": "F16: routes/trackOrder.ts:15-18 inserts a URL ID into executable $where JavaScript; runtime gate is qualified."
+    },
+    {
+      "id": "5",
+      "text": "5: NoSQL $where sleep / injection in review listing | routes/showProductReviews.ts | noSqlCommand",
+      "passed": true,
+      "score": 1,
+      "evidence": "F16: routes/showProductReviews.ts:36 builds $where from ID and installs blocking sleep at :17-25."
+    },
+    {
+      "id": "6",
+      "text": "6: SSTI / code execution via username rendered in pug template | routes/userProfile.ts | ssti",
+      "passed": true,
+      "score": 1,
+      "evidence": "F22: routes/userProfile.ts:57-65 evaluates username expressions, then compiles modified Pug source."
+    },
+    {
+      "id": "7",
+      "text": "7: Sandboxed eval of B2B order payload (RCE / DoS) | routes/b2bOrder.ts | rce, rceOccupy",
+      "passed": true,
+      "score": 1,
+      "evidence": "F29: routes/b2bOrder.ts:18-32 evaluates caller code through notevil; synchronous resource-exhaustion impact is bounded by the two-second timeout. Credit DoS, not an unproven sandbox escape."
+    },
+    {
+      "id": "8",
+      "text": "8: YAML parsing of uploads (yaml bomb) | routes/fileUpload.ts | yamlBomb",
+      "passed": true,
+      "score": 1,
+      "evidence": "F29: routes/fileUpload.ts:103-127 uses yaml.load and JSON.stringify; names aliased-document expansion and memory/CPU exhaustion despite the byte/time caps."
+    },
+    {
+      "id": "9",
+      "text": "9: XXE in XML upload (noent) | routes/fileUpload.ts | xxeFileDisclosure, xxeDos",
+      "passed": true,
+      "score": 1,
+      "evidence": "F26: lib/xml.ts enables filesystem providers, NOENT and DTDLOAD, reached through routes/fileUpload.ts; external-file disclosure/expansion described."
+    },
+    {
+      "id": "10",
+      "text": "10: Zip slip in zip upload handling | routes/fileUpload.ts | fileWrite",
+      "passed": true,
+      "score": 1,
+      "evidence": "F25: routes/fileUpload.ts:27-35 checks substring containment in project root rather than the extraction directory; archive entries can escape the intended destination."
+    },
+    {
+      "id": "11",
+      "text": "11: Upload size/type enforced client-side or after processing | routes/fileUpload.ts, frontend | uploadSize, uploadType, deprecatedInterface",
+      "passed": false,
+      "score": 0,
+      "evidence": "Not credited conservatively. F28 is the separate memory-upload route. F45 cites fileUpload.ts:62-68 accepting MIME labels but frames the mechanism as metric-label cardinality, not the complaint upload size/extension validation bypass or client-only constraints. This is a borderline partial observation, not a full report of this root cause."
+    },
+    {
+      "id": "12",
+      "text": "12: Mass assignment on user registration (role, etc.) | server.ts finale/REST, routes/verify.ts | registerAdmin",
+      "passed": true,
+      "score": 1,
+      "evidence": "F10: server.ts generated UserModel registration accepts role; models/user.ts accepts admin/accounting values without server-side replacement."
+    },
+    {
+      "id": "13",
+      "text": "13: Weak server-side registration validation (empty email/password, repeat check client-only) | server.ts, frontend register | emptyUserRegistration, passwordRepeat",
+      "passed": false,
+      "score": 0,
+      "evidence": "No finding establishes empty registration email/password or absent server-side password-repeat validation. Role mass assignment in F10 is a different root cause."
+    },
+    {
+      "id": "14",
+      "text": "14: Negative quantity / price manipulation in basket & order | routes/basketItems.ts, routes/order.ts | negativeOrder",
+      "passed": true,
+      "score": 1,
+      "evidence": "F31: routes/basketItems.ts only checks upper bounds; negative quantities flow into stock, order totals and wallet arithmetic."
+    },
+    {
+      "id": "15",
+      "text": "15: Deluxe membership payment bypass | routes/deluxe.ts | freeDeluxe",
+      "passed": true,
+      "score": 1,
+      "evidence": "F32: routes/deluxe.ts checks only wallet/card strings and falls through to upgrade for missing/unsupported payment modes."
+    },
+    {
+      "id": "16",
+      "text": "16: Coupon codes forgeable (z85, no secret) / expiry not enforced | lib/insecurity.ts, routes/order.ts, routes/coupon.ts | forgedCoupon, manipulateClock",
+      "passed": true,
+      "score": 1,
+      "evidence": "F30: unsigned Z85 coupons plus campaign timestamp supplied by the caller; no server-current-time validation."
+    },
+    {
+      "id": "17",
+      "text": "17: Null byte / path filter bypass and directory listing on /ftp | routes/fileServer.ts, server.ts serveIndex | nullByte, directoryListing, forgottenBackup, forgottenDevBackup, misplacedSignatureFile",
+      "passed": true,
+      "score": 1,
+      "evidence": "F37: routes/fileServer.ts validates extension before cutting at literal %00; F36 also describes public directory indexes."
+    },
+    {
+      "id": "18",
+      "text": "18: Access logs served publicly | server.ts (/support/logs) | accessLogDisclosure",
+      "passed": true,
+      "score": 1,
+      "evidence": "F36: server.ts:301-303 publishes support logs without authentication; F08 traces password-bearing URLs into those logs."
+    },
+    {
+      "id": "19",
+      "text": "19: Admin area guarded only client-side / admin REST without role check | frontend routes, server.ts | adminSection",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11: generated user/admin-like APIs require generic JWT instead of roles; Angular AdminGuard does not protect direct HTTP access."
+    },
+    {
+      "id": "20",
+      "text": "20: Feedback CRUD without auth or ownership (delete any, forge UserId, zero stars, captcha reuse) | server.ts Feedback REST, routes/verify.ts, routes/captcha.ts | feedback, forgedFeedback, zeroStars, captchaBypass",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11 identifies generic-auth feedback deletion; F12 body-supplied UserId forgery; F38 CAPTCHA answers/reuse. Credit does not imply every feedback subcase was found."
+    },
+    {
+      "id": "21",
+      "text": "21: Basket read by ID without ownership check | routes/basket.ts | basketAccess",
+      "passed": true,
+      "score": 1,
+      "evidence": "F13: routes/basket.ts:18-19 looks up URL ID without principal scoping."
+    },
+    {
+      "id": "22",
+      "text": "22: Basket item add with BasketId from body / duplicate key parsing | routes/basketItems.ts | basketManipulate",
+      "passed": true,
+      "score": 1,
+      "evidence": "F14: routes/basketItems.ts authorizes the first duplicate BasketId and persists the last."
+    },
+    {
+      "id": "23",
+      "text": "23: Product review author taken from body / update without author check | routes/createProductReviews.ts, routes/updateProductReviews.ts | forgedReview",
+      "passed": true,
+      "score": 1,
+      "evidence": "F15: routes/createProductReviews.ts trusts body author and updateProductReviews.ts omits author predicate."
+    },
+    {
+      "id": "24",
+      "text": "24: Product PUT allowed for non-admin | server.ts Products REST | changeProduct",
+      "passed": true,
+      "score": 1,
+      "evidence": "F11: server.ts:391-394 product PUT authorization is commented out; direct unprivileged product modification explained."
+    },
+    {
+      "id": "25",
+      "text": "25: CSRF on profile update (form POST accepted cross-origin, no token) | routes/updateUserProfile.ts | csrf",
+      "passed": true,
+      "score": 1,
+      "evidence": "F24: routes/updateUserProfile.ts cookie authentication plus form-urlencoded POST with no blocking origin/token check; SameSite/browser prerequisites are explicitly bounded."
+    },
+    {
+      "id": "26",
+      "text": "26: SSRF via profile image URL fetch | routes/profileImageUrlUpload.ts | ssrf",
+      "passed": true,
+      "score": 1,
+      "evidence": "F21: routes/profileImageUrlUpload.ts fetches arbitrary imageUrl with no destination/redirect control and saves response bytes publicly."
+    },
+    {
+      "id": "27",
+      "text": "27: Weak / hard-coded seed credentials and test accounts | data/static/users.yml, frontend | weakPassword, exposedCredentials, loginSupport, loginAmy, loginRapper",
+      "passed": false,
+      "score": 0,
+      "evidence": "Seed-user datasets explicitly excluded. F36 mentions recovery configuration but says seeded-account binding was not inspected; no weak/default seed credential established."
+    },
+    {
+      "id": "28",
+      "text": "28: Password reset by security question, no rate limit, guessable answers | routes/resetPassword.ts | resetPassword* (6), geoStalking*",
+      "passed": true,
+      "score": 1,
+      "evidence": "F39: routes/resetPassword.ts uses reusable knowledge answers, weak proof and spoofable-IP throttling; anonymous question lookup also named."
+    },
+    {
+      "id": "29",
+      "text": "29: OAuth login derives password from base64(reversed email) client-side | frontend oauth component, routes/login.ts | oauthUserPassword",
+      "passed": true,
+      "score": 1,
+      "evidence": "F07: oauth.component.ts derives local password from base64(reversed email); server accepts normal local login without provider proof."
+    },
+    {
+      "id": "30",
+      "text": "30: Change password skips current-password check when param absent (GET params) | routes/changePassword.ts | changePasswordBender",
+      "passed": true,
+      "score": 1,
+      "evidence": "F08: routes/changePassword.ts checks current password only when supplied and uses query parameters."
+    },
+    {
+      "id": "31",
+      "text": "31: TOTP secret stored in plaintext in users table | routes/2fa.ts, models/user.ts | twoFactorAuthUnsafeSecretStorage",
+      "passed": false,
+      "score": 0,
+      "evidence": "Not credited conservatively. F09 identifies exposed TOTP seeds in models/responses/JWTs and recommends protected storage, but does not establish plaintext database storage as a distinct root cause. Same conservative criterion as the October 14 baseline; broader interpretation would add one point."
+    },
+    {
+      "id": "32",
+      "text": "32: Weak crypto: MD5 password hashing, hard-coded HMAC/RSA keys | lib/insecurity.ts | weirdCrypto, passwordHashLeak (hash returned by whoami/Users)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F06: lib/insecurity.ts plain unsalted MD5; model setter and login comparison traced. F03 separately identifies shared signing material."
+    },
+    {
+      "id": "33",
+      "text": "33: JWT: alg none / RSA public key confusion accepted, legacy express-jwt | lib/insecurity.ts, package.json | jwtUnsigned, jwtForged",
+      "passed": false,
+      "score": 0,
+      "evidence": "F04 explicitly says none/RSA-HMAC algorithm confusion is not independently established. Token-purpose/expiry flaws do not establish this rubric mechanism."
+    },
+    {
+      "id": "34",
+      "text": "34: Hard-coded encryption keys and key files shipped (encryptionkeys/, ctf.key, premium reward AES key) | encryptionkeys/, lib/insecurity.ts, routes/premiumReward.ts, routes/easterEgg.ts | premiumPaywall, easterEggLevelTwo, nftUnlock (private key)",
+      "passed": true,
+      "score": 1,
+      "evidence": "F03: embedded RSA signing key in lib/insecurity.ts and publicly served Terraform source. Credit shipped signing key material, not every AES/NFT subcase."
+    },
+    {
+      "id": "35",
+      "text": "35: Prometheus /metrics unauthenticated | routes/metrics.ts, server.ts | exposedMetrics",
+      "passed": true,
+      "score": 1,
+      "evidence": "F36: unauthenticated /metrics registration plus runtime/business metrics named."
+    },
+    {
+      "id": "36",
+      "text": "36: Verbose error handler / stack traces in responses | server.ts errorhandler | errorHandling",
+      "passed": true,
+      "score": 1,
+      "evidence": "F36: server.ts:702 unconditional errorhandler exposes developer details, with dependency response formatting qualified."
+    },
+    {
+      "id": "37",
+      "text": "37: XSS sinks: search query via bypassSecurityTrustHtml, product description innerHTML, order-id reflection, True-Client-IP stored and rendered, outdated sanitize-html, video subtitle injection into pug, CSP header built from profile image URL | frontend search/product/track-result/administration/last-login-ip, routes/saveLoginIp.ts, routes/videoHandler.ts, routes/userProfile.ts, package.json | localXss, xssBonus, reflectedXss, restfulXss, persistedXssUser, persistedXssFeedback, httpHeaderXss, videoXss, usernameXss",
+      "passed": true,
+      "score": 1,
+      "evidence": "F18/F19 trace Angular bypassSecurityTrustHtml into HTML renders for URL and stored product/email data; F22/F23 cover profile eval/CSP; subtitle insertion also recorded as follow-up. Group credit is not exhaustive XSS coverage."
+    },
+    {
+      "id": "38",
+      "text": "38: Open redirect allowlist uses substring match | lib/insecurity.ts isRedirectAllowed, routes/redirect.ts | redirect, redirectCryptoCurrency",
+      "passed": false,
+      "score": 0,
+      "evidence": "No finding describes routes/redirect.ts or isRedirectAllowed substring allowlist bypass. Listing redirect.ts/security helpers as reviewed is not detection evidence."
+    },
+    {
+      "id": "39",
+      "text": "39: JSONP whoami callback leaks email cross-origin | routes/currentUser.ts | emailLeak",
+      "passed": true,
+      "score": 1,
+      "evidence": "F24: routes/currentUser.ts:54-58 returns authenticated data as JSONP; cross-origin script reading with eligible cookies is described."
+    },
+    {
+      "id": "40",
+      "text": "40: Known-vulnerable / typosquatted dependencies pinned in manifests | package.json, frontend/package.json, Dockerfile | knownVulnerableComponent, typosquattingNpm, typosquattingAngular, supplyChainAttack, csaf, vulnerableDockerImage",
+      "passed": false,
+      "score": 0,
+      "evidence": "Dependency verification explicitly remains open; no vulnerable or typosquatted package is established. Old versions alone are not counted."
+    }
+  ],
+  "summary": {
+    "passed": 33,
+    "failed": 7,
+    "total": 40,
+    "pass_rate": 0.825
+  },
+  "weighted_totals": {
+    "G": {
+      "score": 33,
+      "total": 40
+    }
+  },
+  "bonus": [
+    {
+      "id": "B1",
+      "score": 1,
+      "passed": true,
+      "evidence": "F35: likeProductReviews.ts check/increment/delayed voter-record sequence permits concurrent duplicate likes."
+    },
+    {
+      "id": "B2",
+      "score": 1,
+      "passed": true,
+      "evidence": "F27: dataErasure.ts accepts body layout/options into res.render; local template/file disclosure described with HBS resolution qualification."
+    },
+    {
+      "id": "B3",
+      "score": 1,
+      "passed": true,
+      "evidence": "F17: dataExport.ts selects orders by lossy masked email, so colliding accounts select each other's orders."
+    },
+    {
+      "id": "B4",
+      "score": 1,
+      "passed": true,
+      "evidence": "F41/F42: untrusted input influences chat policy, coupon tool lacks code enforcement, and non-admin tool traces are streamed despite UI hiding."
+    },
+    {
+      "id": "B5",
+      "score": 0,
+      "passed": false,
+      "evidence": "F47 wallet attribution is not the rubric's contract reentrancy/NFT mint/sandbox weakness; smart contracts explicitly excluded."
+    },
+    {
+      "id": "B6",
+      "score": 0,
+      "passed": false,
+      "evidence": "No hidden-client-route/asset finding matching this bonus. Public signing-secret disclosure is already G34, not credited again as route discovery."
+    },
+    {
+      "id": "B7",
+      "score": 0,
+      "passed": false,
+      "evidence": "Progress/restore body behavior explicitly unreviewed; no Hashids continuation forgery."
+    },
+    {
+      "id": "B8",
+      "score": 0,
+      "passed": false,
+      "evidence": "No address/delivery SVG markup injection identified. General XSS or active image content is not this distinct bonus."
+    },
+    {
+      "id": "B9",
+      "score": 0,
+      "passed": false,
+      "evidence": "No missing image-filename output encoding finding."
+    }
+  ],
+  "bonus_summary": {
+    "score": 4,
+    "total": 9
+  },
+  "calibration": "Each numbered finding has severity/confidence/prerequisites, source anchors, remediation and proposed regression checks. Browser, library, safety-mode and deployment dependencies are qualified. Wildcard CORS is expressly not equated with credentialed disclosure. Coverage ledger distinguishes full reads, focused/truncated reads and exclusions.",
+  "false_positive_review": {
+    "confirmed": [],
+    "exhaustive": false,
+    "note": "No zero-false-positive claim. All 48 findings were read, but only selected claims were source-adjudicated and no runtime behavior was tested. Anchor existence was checked by the auditor, not proof of semantics."
+  },
+  "claims": [
+    {
+      "claim": "F40 chat identity uses decode-only JWT data.id",
+      "verified": true,
+      "evidence": "Coordinator read routes/chat.ts getUserId, lines 42-46: security.decode(token) followed by decoded.data.id, without signature verification in that helper."
+    },
+    {
+      "claim": "F09 memories serialize a joined UserModel",
+      "verified": true,
+      "evidence": "Coordinator read routes/memory.ts: getMemories calls MemoryModel.findAll({include:[UserModel]}) and res.json(data). Full exposure also depends on model serialization/route gates as traced by report."
+    }
+  ],
+  "ambiguities": [
+    "G11 includes a MIME-label acceptance observation in F45 but not the intended validation-bypass mechanism; conservative score excludes it.",
+    "G31 exposure versus plaintext-storage distinction yields 34/40 if broad match accepted; both G11 and G31 accepted would yield 35/40. These alternatives are not the headline score."
+  ],
+  "eval_feedback": {
+    "overall": "Grouped root causes hide subcase omissions; scoring presence of one XSS sink is not a measure of complete XSS coverage. Dependency/seed exclusions can be appropriately cautious while lowering detection score. Historical source provenance remains unknown."
+  },
+  "timing": {
+    "executor_duration_seconds": 1354.5,
+    "total_tokens": null
+  },
+  "grading_method": "Coordinator manual per-row grade; saved before opening with-skill report. Full report and process notes reviewed; no execution transcript available."
+}

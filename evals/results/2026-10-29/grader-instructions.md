@@ -1,0 +1,9 @@
+# Grading instructions
+
+Read the skill-creator `agents/grader.md`, this iteration's `grading-policy.md`, the target rubric, and the assigned saved report/process files completely. Grade only the assigned report. Do not read the counterpart report or any historical report/grade. Use local target source to adjudicate concrete claims as needed; do not audit afresh and credit discoveries absent from the report. Do not edit the report or source.
+
+Write `grading.json` in the assigned run directory. Include one expectation per rubric row: string `id`, original `text`, boolean `passed`, numeric `score`, and specific `evidence` quoting/report-anchoring the supported mechanism or explaining what is missing. Juice Shop has 40 core rows scored 0 or 1. WebGoat has 59 rows: A=12, B=7, C=34 with 0/0.5/1, and D=6 binary. Set `passed` true only for score 1. Save `summary` (full passed, failed, total, binary pass_rate) and `weighted_totals` by section, separate from that binary summary. Juice Shop bonus B1-B9 belongs in a separate array, never the core expectations. WebGoat bonus claims likewise remain separate.
+
+Apply the A8 addendum equally: exposed configuration/health metadata does not prove unsanitized secrets. Do not silently regrade historical results. Keep report calibration, severity overclaims, false claims and rubric omissions distinct. Record a confirmed false positive only with sufficient evidence; unresolved claims are not confirmed false positives. Explain verification limits rather than asserting zero false positives from an incomplete verification pass.
+
+Process notes are self-reported; full transcripts are unavailable. Do not fabricate timing/token usage. Return output path, core scores, bonus score if applicable, key misses/overclaims, and any ambiguous grading decisions needing coordinator adjudication. Persist grading before reporting completion.

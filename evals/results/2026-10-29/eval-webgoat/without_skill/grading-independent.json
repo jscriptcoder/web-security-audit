@@ -1,0 +1,685 @@
+{
+  "expectations": [
+    {
+      "id": "A1",
+      "text": "WebWolf file upload writes `multipartFile.getOriginalFilename()` resolved under `fileLocation/<username>` with no normalisation, after `Files.deleteIfExists`: path traversal write and delete by any WebWolf user | `webwolf/FileServer.java` `importFile` (`destinationDir.toPath().resolve(getOriginalFilename())`) | Names the unnormalised filename resolve (not just \"upload lacks type check\")",
+      "passed": true,
+      "score": 1,
+      "evidence": "P08: FileServer.java:91 resolves the multipart original filename without containment validation; lines 92–93 delete then copy. Explicit traversal/absolute-path write/delete impact."
+    },
+    {
+      "id": "A2",
+      "text": "`POST /mail` is `permitAll` and `MailboxController.sendEmail` stores a client-supplied recipient/sender/contents: anyone, unauthenticated, plants mail in any user's mailbox | `container/WebSecurityConfig.java` (`requestMatchers(HttpMethod.POST, \"/mail\").permitAll()`), `container/mailbox/MailboxController.java` | Both the permitAll and the arbitrary recipient",
+      "passed": true,
+      "score": 1,
+      "evidence": "P05: WebSecurityConfig.java:50–51 permits anonymous POST /mail; MailboxController.java:58–64 saves attacker-selected recipient, sender, title and contents."
+    },
+    {
+      "id": "A3",
+      "text": "Mailbox renders `mail.contents` with `th:utext`: stored XSS on the WebGoat origin, reachable unauthenticated through A2, against any user including `webgoat-admin` (CSRF is disabled, so the admin API is scriptable) | `webgoat/templates/mailbox.html` (`<pre th:utext=\"${mail.contents}\">`) | Names the unescaped render; chaining to A2 or to admin impact is a bonus, not required",
+      "passed": true,
+      "score": 1,
+      "evidence": "P05: mailbox.html:142 renders mail.contents with th:utext; describes unauthenticated mail to a chosen user and administrator-origin impact."
+    },
+    {
+      "id": "A4",
+      "text": "`DELETE /mail` calls `mailboxRepository.deleteAll()`: any authenticated user deletes every user's mail | `MailboxController.deleteAllMail` | Names the cross-user scope",
+      "passed": true,
+      "score": 1,
+      "evidence": "P06: DELETE /mail calls repository-wide deleteAll() without a principal/recipient/admin check; explicitly erases every mailbox."
+    },
+    {
+      "id": "A5",
+      "text": "CSRF protection disabled in both security chains and all security headers disabled in WebGoat | `container/WebSecurityConfig.java` (`csrf.disable()`, `headers.disable()`), `webwolf/WebSecurityConfig.java` | Reported as platform configuration **and** labelled as deliberate for the lessons (see D5 for the severity side)",
+      "passed": false,
+      "score": 0.5,
+      "evidence": "P12 identifies CSRF disabled in both chains; P17 identifies all WebGoat security headers disabled. P12 says to “isolate deliberate lesson exceptions,” but does not explicitly label the existing global configuration itself deliberate for teaching; P17 likewise recommends scoping future unsafe teaching behavior. Strict explicit-label requirement held at half credit. Broader interpretation of the remediation wording would award 1."
+    },
+    {
+      "id": "A6",
+      "text": "Passwords stored and compared in plaintext: `NoOpPasswordEncoder` beans in both chains, `web_goat_user.password` plain, admin password reset returns the temporary password in the response | both `WebSecurityConfig.java`, `container/users/AdminController.resetPassword` | Names `NoOpPasswordEncoder`",
+      "passed": true,
+      "score": 1,
+      "evidence": "P02 names NoOpPasswordEncoder in both WebSecurityConfig classes and unchanged password persistence. Full hit criterion is naming NoOpPasswordEncoder; the temporary admin reset response is not separately described."
+    },
+    {
+      "id": "A7",
+      "text": "Default credentials re-seeded on every start: `webgoat-admin`/`webgoat` with `WEBGOAT_ADMIN`, `webgoat-user`/`webgoat`; the admin password is forced back to the default even after a reset | `container/users/DefaultUserInitializer.java` | Names the initializer and the admin role",
+      "passed": true,
+      "score": 1,
+      "evidence": "P01 names DefaultUserInitializer, webgoat-admin/webgoat, restoration on every run, ordinary bootstrap account, and WEBGOAT_ADMIN authority."
+    },
+    {
+      "id": "A8",
+      "text": "Actuator `env`, `configprops` and `health` (details always) exposed and `/actuator/**` is `permitAll`: unauthenticated environment and configuration disclosure (OAuth client secret, keystore password when set through environment) | `application-webgoat.properties` (`management.endpoints.web.exposure.include=env, health,configprops`), `container/WebSecurityConfig.java` | Both the exposure list and the permitAll. The simulated `/SecurityMisconfiguration/task3/actuator/*` endpoints are a lesson, not this",
+      "passed": true,
+      "score": 1,
+      "evidence": "P16 names env/health/configprops exposure, detailed DB health and /actuator/** permitAll. Explicitly warns “Do not infer cleartext environment secrets.” Full credit under A8 addendum; no secret-value overclaim."
+    },
+    {
+      "id": "A9",
+      "text": "Stack traces always included in error responses for both applications | `application-webgoat.properties` (`spring.web.error.include-stacktrace=always`), `application-webwolf.properties` (`server.error.include-stacktrace=always`) | Either file",
+      "passed": true,
+      "score": 1,
+      "evidence": "P16 identifies application-webgoat.properties:1 stacktrace inclusion and WebWolf legacy property with runtime caveat. Either file suffices."
+    },
+    {
+      "id": "A10",
+      "text": "Progress credited to another account: `LessonTrackerInterceptor.realUsername` strips a `csrf-` prefix, and `UserForm` allows registering `csrf-<victim>` (`[a-z0-9-]*`, 6 to 45 chars), so an attacker's solves and failures are written to the victim's progress | `container/assignments/LessonTrackerInterceptor.java`, `container/users/UserForm.java` | Both halves; the prefix alone without the registration pattern is 0.5",
+      "passed": true,
+      "score": 1,
+      "evidence": "P13 traces LessonTrackerInterceptor.realUsername stripping csrf- to victim progress writes, and UserForm lowercase/digit/hyphen registration with no reserved prefix; bounds username length."
+    },
+    {
+      "id": "A11",
+      "text": "WebWolf request catcher: `/landing/**` and `POST /requests` are unauthenticated; `Requests.allowedTrace` hides other users' traces only by substring match on the username; `requests.html` renders the trace path and JSON with `th:utext`, so a request to `/landing?<script>` executes when the owner views it | `webwolf/requests/Requests.java`, `webwolf/templates/requests.html`, `webwolf/WebSecurityConfig.java` | Either the cross-user visibility or the unescaped render",
+      "passed": true,
+      "score": 1,
+      "evidence": "P10 identifies requests.html th:utext for JSON/path; P11 traces Requests.allowedTrace default allow and substring ownership. Both alternatives covered, with recording/header runtime caveats."
+    },
+    {
+      "id": "A12",
+      "text": "DOM XSS in the WebGoat shell: Backbone route `test/:param` writes the fragment parameter with `.html('test:' + param)` | `webgoat/static/js/goatApp/view/GoatRouter.js` (`'test/:param'`), `LessonContentView.js` (`.html('test:' + param)`) | Names the route or the sink; it serves the DOM XSS lesson, so labelling it by-design is acceptable if the location is right",
+      "passed": true,
+      "score": 1,
+      "evidence": "Lesson inventory DOM XSS row traces GoatRouter test/:param through LessonController to LessonContentView .html('test:' + param); correctly locates common-shell sink."
+    },
+    {
+      "id": "B1",
+      "text": "Challenge 1: `ImageServlet.logo()` writes the four-digit `PINCODE` into fixed byte offsets of the PNG served at `/challenge/logo`; `Assignment1` accepts `admin` with `SolutionConstants.PASSWORD` where `1234` is replaced by that pincode | `lessons/challenges/challenge1/ImageServlet.java`, `Assignment1.java`, `SolutionConstants.java` | The image side-channel; the hardcoded password constant alone is 0.5",
+      "passed": true,
+      "score": 1,
+      "evidence": "C01 names ImageServlet, 10,000-range PIN and PNG offsets 32–35, returned publicly, then Assignment1 check. Image side-channel fully described despite intentionally not opening SolutionConstants."
+    },
+    {
+      "id": "B2",
+      "text": "Challenge 5: username and password concatenated into the SQL text passed to `prepareStatement`: authentication bypass as `Larry` | `challenge5/Assignment5.java` | Names the concatenation despite the `PreparedStatement` wrapper",
+      "passed": true,
+      "score": 1,
+      "evidence": "C02 Assignment5:40–46 concatenates password before prepareStatement/execute; expressly says preparation does not parameterize the text, and correctly bounds username input."
+    },
+    {
+      "id": "B3",
+      "text": "Challenge 7: `PasswordResetLink.createPasswordReset` seeds `java.util.Random` with `key.length()` for `admin`, then scrambles an MD5 of the username: the admin reset token is deterministic (and `ADMIN_PASSWORD_LINK` is a constant) | `challenge7/PasswordResetLink.java`, `Assignment7.java` | The seeded Random or the constant link",
+      "passed": true,
+      "score": 1,
+      "evidence": "C03 names PasswordResetLink predictably seeded Random plus MD5 and Assignment7:32 constant accepted admin reset link. Either seeded Random or constant suffices."
+    },
+    {
+      "id": "B4",
+      "text": "Challenge 7: `/challenge/7/.git` serves `git.zip` from the classpath: source and history disclosure | `Assignment7.git()` | Names the endpoint",
+      "passed": false,
+      "score": 0.5,
+      "evidence": "C03 says Assignment7.java:96–99 serves a packaged .git archive; exact /challenge/7/.git endpoint is never named. Source confirms the cited handler is correct. Strict “Names the endpoint” requirement earns half; treating class/line plus .git as endpoint identification would award 1."
+    },
+    {
+      "id": "B5",
+      "text": "Challenge 8: `vote` is a `@GetMapping` that refuses when `request.getMethod()` is `GET`; a `HEAD` request is dispatched to the same handler, passes the check and returns the flag in the `X-FlagController` header | `challenge8/Assignment8.java` | Names the method-check bypass (HEAD) or at least that the only guard is a method string compare",
+      "passed": true,
+      "score": 1,
+      "evidence": "C05 names Assignment8 GET mapping, actual-method GET-only rejection, inferred HEAD dispatch and flag response header; appropriately says no runtime test."
+    },
+    {
+      "id": "B6",
+      "text": "Challenge 2, hop 1: `ChainedXmlService.newDocumentBuilder` sets `external-general-entities` to `true` and installs an `EntityResolver` that fetches the entity's system id: XXE | `challenge2/ChainedXmlService.java` | Names the enabled feature or the resolver",
+      "passed": true,
+      "score": 1,
+      "evidence": "C06 ChainedXmlService:55 enables general external entities; :63–65 installs custom resolver, :85 dispatches system ID and :92 returns fetched text. Correctly distinguishes bounded simulated fetch from arbitrary I/O."
+    },
+    {
+      "id": "B7",
+      "text": "Challenge 2, hops 2 and 3: `/northstar/go?url=` is an open redirect; `ChainedFetchService.fetch` checks the allowlist only on the starting URL and follows up to four redirects checking same-origin only, so a redirect to `/northstar/internal/diagnostics` is followed and the fetcher calls `diagnostic.diagnostics(state.internalToken())` with the trusted internal header, returning the flag into the XML preview | `challenge2/NorthstarEndpoints.java`, `ChainedFetchService.java`, `InternalDiagnostic.java` | The redirect-through-allowlist to the internal endpoint. Open redirect alone is 0.5",
+      "passed": true,
+      "score": 1,
+      "evidence": "C06 traces initial feed/go allowlist, redirect to internal/diagnostics and call using state internal token; C07 identifies NorthstarEndpoints redirect Location from url. Source confirms same-origin bounded Java dispatcher. This is the required full chain, not open redirect alone."
+    },
+    {
+      "id": "C1",
+      "text": "sqlinjection/introduction | String-concatenated queries: `SqlInjectionLesson5a` (`WHERE userid = '\" + accountName + \"'`), `5b` (`userid= \" + accountName` inside a `PreparedStatement` text), `8`, `9`, `10`. Any one with its file",
+      "passed": true,
+      "score": 1,
+      "evidence": "SQL string/numeric inventory names SqlInjectionLesson5a and 5b and concatenation into JDBC SQL despite PreparedStatement."
+    },
+    {
+      "id": "C2",
+      "text": "sqlinjection/introduction | Lessons 2, 3, 4, 5 execute the full user-supplied query string (`statement.executeQuery(query)`)",
+      "passed": true,
+      "score": 1,
+      "evidence": "SQL introduction inventory names SqlInjectionLesson2/3/4/5 with full supplied SQL executed through Statement APIs."
+    },
+    {
+      "id": "C3",
+      "text": "sqlinjection/advanced | `SqlInjectionLesson6a.injectableQuery` concatenates `userid` (UNION). `6b` runs a fixed query and compares the submitted answer; it is not a sink (corrected after the first grading, see `evals/README.md`)",
+      "passed": true,
+      "score": 1,
+      "evidence": "Advanced SQL row names SqlInjectionLesson6a UNION query manipulation. Counterexamples row expressly excludes 6b fixed-query answer comparison."
+    },
+    {
+      "id": "C4",
+      "text": "sqlinjection/advanced | `SqlInjectionChallenge.registerNewUser`: `checkUserQuery` concatenates `username_reg` (blind SQLi in registration) while the INSERT is parameterised; `SqlInjectionChallengeLogin` is parameterised and must not be flagged (D3)",
+      "passed": true,
+      "score": 1,
+      "evidence": "Advanced SQL row names SqlInjectionChallenge registration/existence-query injection and contrasts bound INSERT. Counterexamples expressly recognize bound SqlInjectionChallengeLogin."
+    },
+    {
+      "id": "C5",
+      "text": "sqlinjection/mitigation | `Servers.sort`: `order by \" + column` inside a `PreparedStatement` (ORDER BY injection)",
+      "passed": true,
+      "score": 1,
+      "evidence": "SQL mitigation failures names Servers.java:41–50 ORDER BY identifier concatenation and recommends fixed column mapping."
+    },
+    {
+      "id": "C6",
+      "text": "sqlinjection/mitigation | `SqlOnlyInputValidation` (rejects spaces only) and `SqlOnlyInputValidationOnKeywords` (single-pass `replace(\"FROM\",\"\")`/`\"SELECT\"`): filter bypass with comments or nested keywords",
+      "passed": true,
+      "score": 1,
+      "evidence": "SQL mitigation failures names both SqlOnlyInputValidation and SqlOnlyInputValidationOnKeywords, literal-space rejection and uppercase keyword stripping. Describes incomplete denylisting and alternate whitespace/case, sufficient actual filter mechanism without an exploit payload."
+    },
+    {
+      "id": "C7",
+      "text": "jwt | `Jwts.parser().setSigningKey(..).parse(token)` on jjwt 0.9.1 accepts unsigned `alg: none` tokens: `JWTVotesEndpoint` (`getVotes`, `vote`, `resetVotes`) and `JWTRefreshEndpoint.checkout`",
+      "passed": true,
+      "score": 1,
+      "evidence": "JWT votes row names JWTVotesEndpoint generic JWT parser and inferred unsecured JWT acceptance; JWT refresh row identifies explicit none exercise in JWTRefreshEndpoint. Does not state jjwt 0.9.1, but names actual parser mechanism/classes and appropriately qualifies runtime inference."
+    },
+    {
+      "id": "C8",
+      "text": "jwt | `JWTSecretKeyEndpoint`: HS256 key chosen from five dictionary words (`SECRETS`): offline brute force then forge",
+      "passed": true,
+      "score": 1,
+      "evidence": "JWT weak secret row names JWTSecretKeyEndpoint small dictionary, offline guessing and forging-relevant strong-key remediation."
+    },
+    {
+      "id": "C9",
+      "text": "jwt | `JWTRefreshEndpoint.newToken`: refresh token not bound to a user, user claim read from an expired token (`ExpiredJwtException.getClaims()`), tokens issued for any `user`; hardcoded `PASSWORD`/`JWT_PASSWORD`",
+      "passed": true,
+      "score": 1,
+      "evidence": "JWT refresh row names JWTRefreshEndpoint global valid refresh list, membership not bound to expired access-token subject, and replacement issuance. Primary confused-identity mechanism covered; hardcoded password names omitted."
+    },
+    {
+      "id": "C10",
+      "text": "jwt | `JWTHeaderKIDEndpoint`: `kid` header concatenated into `SELECT key FROM jwt_keys WHERE id = '...'`: SQL injection controls the verification key",
+      "passed": true,
+      "score": 1,
+      "evidence": "JWT kid SQL injection row names JWTHeaderKIDEndpoint and concatenated kid SQL selecting verification material before signature validation."
+    },
+    {
+      "id": "C11",
+      "text": "jwt | `JWTHeaderJKUEndpoint`: `jku` header URL fetched without an allowlist (`JwkProviderBuilder(new URL(jku))`): attacker-hosted JWKS verifies a forged RS256 token (also SSRF)",
+      "passed": true,
+      "score": 1,
+      "evidence": "JWT jku trust/SSRF row names JWTHeaderJKUEndpoint, header-controlled URL to JwkProviderBuilder and fetched key verifying same token."
+    },
+    {
+      "id": "C12",
+      "text": "xxe | `CommentsCache.parseXml(xml, false)`: `XMLInputFactory` with external entities enabled (the two `ACCESS_EXTERNAL_*` properties are only cleared when `securityEnabled`); used by `/xxe/simple`, `/xxe/content-type` (XML branch) and `/xxe/blind`; `Ping` logs the exfiltrated text",
+      "passed": true,
+      "score": 1,
+      "evidence": "XML external entities row names CommentsCache and all three callers, securityEnabled=false omitting external-access controls. Source confirms controls conditional rather than an explicit enable call; provider caveat is accurate. Ping exfil logging is not separately reported."
+    },
+    {
+      "id": "C13",
+      "text": "pathtraversal | `ProfileUploadBase.execute`: `new File(uploadDirectory, fullName)` with the user's `fullName`; `ProfileUploadFix` single-pass `replace(\"../\", \"\")`; `ProfileUploadRemoveUserInput` uses `getOriginalFilename()`. Any one",
+      "passed": true,
+      "score": 1,
+      "evidence": "Filename/full-name traversal row names ProfileUploadBase, ProfileUploadFix single-pass ../ removal, and ProfileUploadRemoveUserInput originalFilename; real uncontained file writes."
+    },
+    {
+      "id": "C14",
+      "text": "pathtraversal | `ProfileUploadRetrieval.getProfilePicture`: `id` into `new File(catPicturesDirectory, id + \".jpg\")`; the guard inspects only the raw query string for `..` and `/`, so URL-encoding bypasses it; the 404 branch lists the directory",
+      "passed": true,
+      "score": 1,
+      "evidence": "Encoded retrieval traversal row names ProfileUploadRetrieval, raw-query filter versus decoded id, .jpg append and directory-list fallback."
+    },
+    {
+      "id": "C15",
+      "text": "pathtraversal | `ProfileZipSlip.processZipUpload`: `new File(tmpZipDirectory, e.getName())` for each zip entry without a canonical-path check (zip slip)",
+      "passed": true,
+      "score": 1,
+      "evidence": "Zip Slip row names ProfileZipSlip entry-name joins and copies without containment."
+    },
+    {
+      "id": "C16",
+      "text": "deserialization | `InsecureDeserializationTask`: `ObjectInputStream.readObject()` on base64 input with no filter; gadget `org.dummy.insecure.framework.VulnerableTaskHolder.readObject` runs `Runtime.getRuntime().exec(taskAction)`",
+      "passed": true,
+      "score": 1,
+      "evidence": "Java deserialization row names InsecureDeserializationTask ObjectInputStream.readObject before instanceof/no filter and VulnerableTaskHolder readObject Runtime.exec gadget; bounds actual exec command behavior."
+    },
+    {
+      "id": "C17",
+      "text": "vulnerablecomponents | `new XStream()` with no allowlist and `fromXML(payload)` on XStream 1.4.5 (`pom.xml`): RCE through known gadgets",
+      "passed": true,
+      "score": 1,
+      "evidence": "Vulnerable component row names VulnerableComponentsLesson XStream.fromXML on attacker input, no type allowlist and pom.xml XStream 1.4.5; gadget exploitability qualified rather than falsely claiming tested RCE."
+    },
+    {
+      "id": "C18",
+      "text": "commandinjection | `CommandExecutionService.execute` runs `/bin/sh -c` / `cmd.exe /c` on concatenated input: `CommandInjectionTask2.buildCommand` (`base + payload`), `Task3Service.buildCommand` (`\"grep \" + title`), `Task4Service` (single-pass token replace filter). Any one",
+      "passed": true,
+      "score": 1,
+      "evidence": "Command task 2 row names CommandInjectionTask2 submitted command/payload through CommandExecutionService real shell; tasks 3/4 additionally trace title into shell grep/findstr and token denylist."
+    },
+    {
+      "id": "C19",
+      "text": "csrf | Lesson endpoints depend on the global CSRF disable (A5): `ForgedReviews` uses a fixed shared `weakAntiCSRF` value and a referer-host compare; `CSRFFeedback` accepts JSON as `text/plain` (simple request)",
+      "passed": true,
+      "score": 1,
+      "evidence": "CSRF reviews/login/feedback row names ForgedReviews hardcoded/Referer checks and mutation before check; CSRFFeedback string-parsed JSON admits text/plain. P12 gives global disable."
+    },
+    {
+      "id": "C20",
+      "text": "idor | `IDORViewOtherProfile` (`GET /IDOR/profile/{userId}`) and `IDOREditOtherProfile` (`PUT`, writes `role` and `color`) without an ownership check",
+      "passed": true,
+      "score": 1,
+      "evidence": "IDOR row names IDORViewOtherProfile and IDOREditOtherProfile: path-selected profile lacks owner check and role/color fields mutate fixture."
+    },
+    {
+      "id": "C21",
+      "text": "missingac | `MissingFunctionACUsers`: `GET access-control/users` (JSON) returns every user with a password-derived hash to any authenticated user, `POST` creates users (including `admin`) without authorisation; only `users-admin-fix` checks `isAdmin()`; hidden admin menu items are client-side only",
+      "passed": true,
+      "score": 1,
+      "evidence": "Missing function access control row names MissingFunctionACUsers list disclosure without role authorization and unguarded admin-field user creation, including adminfix POST. Source confirms POST differs from protected usersFixed GET. Password-derived hash and hidden-menu detail are omitted, but primary unauthorized list/create mechanisms and location are present."
+    },
+    {
+      "id": "C22",
+      "text": "authbypass | `AccountVerificationHelper.verifyAccount` validates only the answers whose keys are present: two renamed `secQuestion*` parameters pass",
+      "passed": true,
+      "score": 1,
+      "evidence": "Authentication-question bypass names AccountVerificationHelper and VerifyAccount: only known present keys validated; two differently named secQuestion-matching keys avoid checks."
+    },
+    {
+      "id": "C23",
+      "text": "htmltampering, bypassrestrictions | Server trusts client-side constraints: `HtmlTamperingTask` accepts the client's `Total`; `BypassRestrictionsFieldRestrictions` relies on HTML field limits",
+      "passed": true,
+      "score": 1,
+      "evidence": "Frontend restriction bypass names BypassRestrictionsFieldRestrictions; HTML tampering names HtmlTamperingTask trusting submitted quantity/total. Both composite branches covered and bounded as grading fixtures."
+    },
+    {
+      "id": "C24",
+      "text": "clientsidefiltering | `Salaries` returns every employee including SSN and salary for client-side filtering; `ShopEndpoint /coupons` lists all codes including the 100 percent coupon",
+      "passed": true,
+      "score": 1,
+      "evidence": "Client-side filtering names Salaries and ShopEndpoint, all fixed salary/SSN/coupon data returned before browser filtering. Does not spell out 100 percent but main complete-data disclosure mechanism covered."
+    },
+    {
+      "id": "C25",
+      "text": "hijacksession | `HijackSessionAuthenticationProvider`: session id is an incrementing counter plus epoch millis (predictable); `hijack_cookie` without `HttpOnly`",
+      "passed": true,
+      "score": 1,
+      "evidence": "Predictable session exercise names HijackSessionAuthenticationProvider monotonic counter plus time. Missing HttpOnly detail is not reported; full credit for primary predictable-ID root cause at exact sink. Composite all-clause interpretation could reduce to half."
+    },
+    {
+      "id": "C26",
+      "text": "spoofcookie | `EncDec`: reversible encoding (lowercase + salt, reverse, hex, base64): a user forges `tom`'s cookie from their own",
+      "passed": true,
+      "score": 1,
+      "evidence": "Cookie spoofing names EncDec reversible encoding/removable salt trusted as identity without MAC and SpoofCookieAssignment. Exact encoding stages and Tom name omitted; actual identity-forgery mechanism covered."
+    },
+    {
+      "id": "C27",
+      "text": "httpparameterpollution | `ParameterPollutionTransfer` authorises `recipients[0]` and pays `recipients[last]`",
+      "passed": true,
+      "score": 1,
+      "evidence": "HTTP parameter pollution names ParameterPollutionTransfer validating first beneficiary and using last; correctly bounds this as grading, not actual bank payment."
+    },
+    {
+      "id": "C28",
+      "text": "openredirect | `OpenRedirectRealRedirect`: `\"redirect:\" + url` from the request; the flawed filters in `Task2` (`contains(\"webgoat\")`), `Task3` (userinfo `@`), `Task4` (double decode) are the same class",
+      "passed": true,
+      "score": 1,
+      "evidence": "Open redirect row names OpenRedirectRealRedirect returning redirect: plus submitted url and separate Task2/3/4 flawed checks; distinguishes secure fixed-ID controller."
+    },
+    {
+      "id": "C29",
+      "text": "passwordreset | `ResetLinkAssignmentForgotPassword`: reset link built from the `Host` header (host header poisoning); `QuestionsAssignment`: guessable favourite-colour question",
+      "passed": true,
+      "score": 1,
+      "evidence": "Reset-link poisoning row names ResetLinkAssignmentForgotPassword trusting Host; reset questions row names QuestionsAssignment static low-entropy answers. Both branches covered."
+    },
+    {
+      "id": "C30",
+      "text": "xss | `CrossSiteScriptingLesson5a` reflects `field1` into the HTML output; `StoredXssComments` stores comment text that the client renders unescaped",
+      "passed": true,
+      "score": 1,
+      "evidence": "Reflected XSS row names CrossSiteScriptingLesson5a field1 into HTML; Stored XSS row names StoredXssComments and stored-xss.js HTML append. Both covered."
+    },
+    {
+      "id": "C31",
+      "text": "logging | `LogSpoofingTask` writes the raw username (newlines) into the log line; `LogBleedingTask` logs the admin password (base64) at INFO on startup",
+      "passed": true,
+      "score": 1,
+      "evidence": "Log bleeding row names LogBleedingTask Base64 synthetic secret in real log; Log spoofing row names LogSpoofingTask newline-to-br HTML and explicitly says method does not invoke logger. Source independently confirms both. Full credit under C31 correction, not the false original premise."
+    },
+    {
+      "id": "C32",
+      "text": "cryptography | `SigningAssignment.getprivate` returns the private key; `InsecureHmacValidator.matches` compares byte by byte with early exit and a per-byte delay (timing oracle behind `/crypto/timing/verify*`)",
+      "passed": true,
+      "score": 1,
+      "evidence": "Timing attack names InsecureHmacValidator early exit/per-byte sleep; general crypto row names SigningAssignment returning session-generated private key. Both composite branches covered."
+    },
+    {
+      "id": "C33",
+      "text": "webauthn | `WebAuthnAuthenticationAssignment.finishAuthentication` removes the session challenge and never compares it with `clientData.challenge()` (the `SecurityKeyCeremonyEndpoints` sibling does): the assertion served by `/WebAuthn/support-ticket` replays as Jerry; `RelyingParty.from` derives rpId and origin from `request.getServerName()`",
+      "passed": true,
+      "score": 1,
+      "evidence": "WebAuthn assertion replay names WebAuthnAuthenticationAssignment removal without challenge comparison, captured Jerry assertion, and contrasts stronger SecurityKeyCeremonyEndpoints checks. Does not report RelyingParty.from request-derived rpId/origin. Full primary replay mechanism credit; strict all-clauses composite interpretation could reduce to half."
+    },
+    {
+      "id": "C34",
+      "text": "securitymisconfiguration | Simulated endpoints return hardcoded secrets: `ActuatorExposureTask` (`INTERNAL-API-KEY-987`), `VerboseErrorTask` (`DB_PASSWORD`, `STAGING-TOKEN-42`), `DefaultCredentialsTask` (`admin`/`admin`). Any one, labelled as the lesson's fixtures",
+      "passed": true,
+      "score": 1,
+      "evidence": "Default credentials simulation and verbose-error/config simulation rows name DefaultCredentialsTask, VerboseErrorTask, ActuatorExposureTask and explicitly identify sample/fake/mock secrets and grading fixtures."
+    },
+    {
+      "id": "D1",
+      "text": "`SSRFTask2.furBall` only opens `new URL(url)` after an exact match on `http://ifconfig.pro`; `SSRFTask1` is simulated. The report does not claim an open SSRF in the SSRF lesson (saying the sink is gated, or omitting it, both pass)",
+      "passed": true,
+      "score": 1,
+      "evidence": "SSRF inventory explicitly says task 1 only fixed HTML/no fetch and task 2 opens only exact http://ifconfig.pro; arbitrary URL fetch not claimed."
+    },
+    {
+      "id": "D2",
+      "text": "`UserService.createLessonsForUser` (`CREATE SCHEMA \"<username>\"`) and `LessonConnectionInvocationHandler` (`SET SCHEMA \"<username>\"`) concatenate the username, which `UserForm` restricts to `[a-z0-9-]*`. Not reported as SQL injection, or reported with the validation named and severity held down",
+      "passed": true,
+      "score": 1,
+      "evidence": "P03 identifies shared database privilege/isolation issue rather than SQL injection via username. P11/P13 and deployment counterevidence recognize regular-registration regex. No claim of username-concatenation injection."
+    },
+    {
+      "id": "D3",
+      "text": "`SqlInjectionChallengeLogin` and `SqlInjectionLesson13` use parameters; `MissingFunctionACUsers.usersFixed` checks admin; `OpenRedirectSecureController` uses an allowlist map. None flagged",
+      "passed": true,
+      "score": 1,
+      "evidence": "Advanced SQL counterexamples and bound mitigation example exclude SqlInjectionChallengeLogin/SqlInjectionLesson13 injection; redirect row recognizes fixed-ID allowlist. MissingAC report flags adminfix POST, not usersFixed GET; source confirms POST has no guard, so this is not a trap false positive."
+    },
+    {
+      "id": "D4",
+      "text": "The report separates by-design lesson behaviour from platform defects explicitly (a scope statement, a section split or a per-finding label)",
+      "passed": true,
+      "score": 1,
+      "evidence": "Opening scope explicitly separates deliberate lessons from platform defects, with separate platform, challenge and lesson-inventory sections and bounded fixture impact."
+    },
+    {
+      "id": "D5",
+      "text": "A5 (CSRF off), A6 (no password encoder) and the pinned XStream 1.4.5 / jjwt 0.9.1 are reported as deliberate training configuration with bounded severity, not as standalone Critical exploits of the lesson endpoints",
+      "passed": false,
+      "score": 0,
+      "evidence": "P12/P17 acknowledge teaching exceptions and XStream is in deliberate lesson inventory, but P02 labels platform plaintext High and says documented rather than explicitly deliberate training configuration; jjwt 0.9.1 pin is absent. No standalone Critical lesson exploit claimed, but all explicit-label conditions not met. This is calibration incompleteness, not a confirmed false positive."
+    },
+    {
+      "id": "D6",
+      "text": "The WebWolf JWT tool (`webwolf/jwt/JWTController`, `JWTToken` with `setSkipAllValidators`) is a decoding utility, not a JWT verification flaw",
+      "passed": true,
+      "score": 1,
+      "evidence": "Report scope says JWT utility reviewed; no WebWolf decoder/setSkipAllValidators verification vulnerability is claimed. Omission of a false claim passes this negative expectation."
+    }
+  ],
+  "summary": {
+    "passed": 56,
+    "failed": 3,
+    "total": 59,
+    "pass_rate": 0.9491525423728814
+  },
+  "weighted_totals": {
+    "A": {
+      "score": 11.5,
+      "max_score": 12,
+      "full_passed": 11
+    },
+    "B": {
+      "score": 6.5,
+      "max_score": 7,
+      "full_passed": 6
+    },
+    "C": {
+      "score": 34,
+      "max_score": 34,
+      "full_passed": 34
+    },
+    "D": {
+      "score": 5,
+      "max_score": 6,
+      "full_passed": 5
+    }
+  },
+  "detection_only": {
+    "A": {
+      "score": 11.5,
+      "max_score": 12,
+      "full_passed": 11
+    },
+    "B": {
+      "score": 6.5,
+      "max_score": 7,
+      "full_passed": 6
+    },
+    "note": "Keep A/B detection separate from labelled lesson C coverage and D calibration."
+  },
+  "bonus": [
+    {
+      "id": "BONUS1",
+      "text": "`Email.id` is not `@JsonIgnore`: an unauthenticated `POST /mail` with an existing `id` overwrites another user's mail (`container/mailbox/Email.java`)",
+      "status": "identified_with_runtime_qualification",
+      "evidence": "P07 identifies client-bound Email.id and possible existing-row merge/recipient replacement, explicitly untested. Source Email.id lacks JsonIgnore and sendEmail saves client entity; runtime merge not executed."
+    },
+    {
+      "id": "BONUS2",
+      "text": "`RegistrationController.registrationOAUTH` calls `UserService.addUser(name, random)`, which `save`s a new `WebGoatUser` over an existing row: a GitHub login whose name matches a local user replaces that user's password and role; any logged-in user hitting `GET /login-oauth.mvc` resets their own password",
+      "status": "found",
+      "evidence": "P15 traces authenticated /login-oauth.mvc to unconditional save/new password and ordinary role; source RegistrationController/UserService corroborate. OAuth-provider subject collision is appropriately conditional."
+    },
+    {
+      "id": "BONUS3",
+      "text": "WebWolf `/files/**` serves every user's uploads from disk to anyone (`webwolf/MvcConfiguration`, `file:///` resource handler, GET permitAll) and `/file-server-location` returns the path",
+      "status": "found",
+      "evidence": "P09 identifies public /files/** disk serving; P08 identifies upload-root path disclosure. Source MvcConfiguration, WebSecurityConfig and upload mechanism corroborate. Intentional public hosting is separated from active-content origin risk."
+    },
+    {
+      "id": "BONUS4",
+      "text": "`EnvironmentService` is annotated `@RestController(\"/environment\")` (a bean name, not a path): `GET /server-directory` returns the home directory to any user",
+      "status": "miss",
+      "evidence": "EnvironmentService appears in process read manifest only; no report finding for /server-directory home disclosure."
+    },
+    {
+      "id": "BONUS5",
+      "text": "`LabelDebugService` lets any user toggle a global debugging flag",
+      "status": "miss",
+      "evidence": "LabelDebugService appears in process manifest only; no report global debugging-toggle finding."
+    },
+    {
+      "id": "BONUS6",
+      "text": "`insecurelogin`: the lesson's credentials are hardcoded in the lesson JavaScript and posted in clear",
+      "status": "found",
+      "evidence": "Insecure login inventory names credentials.js embedded credentials sent in request; source confirms literal obfuscated credentials posted by XHR. Default HTTP is separately discussed."
+    },
+    {
+      "id": "BONUS7",
+      "text": "`passwordstorage` stage 1: unsalted SHA-256; the `/PasswordStorage/api/stage*` endpoints dump hash tables",
+      "status": "partial",
+      "evidence": "Password-storage inventory identifies unsalted/salted fast hashes and data controller exposure, but does not explicitly name SHA-256/stage1 API. Source controller confirms SHA-256 records endpoint."
+    },
+    {
+      "id": "BONUS8",
+      "text": "`lessontemplate/SampleAttack` `/lesson-template/shop/{user}` returns a basket for any user id (template code)",
+      "status": "miss",
+      "evidence": "Report describes fixed sample basket data without identifying arbitrary user-id endpoint access. Source ignores supplied user and returns constant items; security significance of this bonus is weak."
+    },
+    {
+      "id": "BONUS9",
+      "text": "Dependency pins: XStream 1.4.5 (CVE-2013-7285 family), jjwt 0.9.1; `config/dependency-check/project-suppression.xml` (removed by the scrub) lists the accepted CVEs",
+      "status": "partial",
+      "evidence": "Vulnerable-components row names XStream 1.4.5; jjwt 0.9.1 absent. pom.xml independently confirms both pins. No external CVE evidence or removed suppression file was read."
+    }
+  ],
+  "bonus_summary": {
+    "scoring": "WebGoat bonus explicitly ungraded; do not combine with core. Three found, one identified with runtime qualification, two partial, three misses.",
+    "found": 3,
+    "identified_with_runtime_qualification": 1,
+    "partial": 2,
+    "miss": 3
+  },
+  "calibration": {
+    "positive": [
+      "Explicit source-only/runtime limitations",
+      "Actuator metadata bounded without unsanitized-secret claim",
+      "Challenge2 correctly classified as bounded in-process dispatcher",
+      "C31 inaccurate logger premise rejected",
+      "MissingAC adminfix POST distinguished from protected GET in source adjudication"
+    ],
+    "incomplete": [
+      "A5 existing global controls not directly called deliberate training configuration",
+      "D5 no explicit deliberate plaintext label or jjwt version pin"
+    ],
+    "severity_overclaims_confirmed": [],
+    "severity_limits": "High severities explicitly assume reachable shared installation and platform impact. No Critical label. Causal/runtime caveats prevent treating P03 grants, P09 MIME execution, P11 cookie recording and P14 authentication timing as experimentally confirmed."
+  },
+  "false_claims": {
+    "confirmed": [],
+    "verification_limit": "No confirmed false positive in targeted semantic checks. This is not a zero-false-positive estimate: all report claims were read, but not every source/library/runtime assertion was independently proved. Anchor existence and line bounds are not semantic verification."
+  },
+  "verification_coverage": {
+    "method": "Read all report.md, process.md and both helper scripts; source-only targeted reads, no execution of target, live testing or network. Did not run helper scripts because they rewrite process.md.",
+    "independently_semantically_checked": [
+      "C31 logging correction",
+      "MissingFunctionACUsers protected GET versus unguarded POST",
+      "Mailbox entity binding/null poison/save and global deletion",
+      "OAuth-completion save path",
+      "WebWolf public static resource and security policy",
+      "WebGoat CSRF/header/NoOp/Actuator policy",
+      "Actual stacktrace/exposure/version properties",
+      "Challenge7 constant/archive handler",
+      "Challenge2 XML resolver and bounded redirect dispatcher",
+      "Database shared source configuration",
+      "Failed-login initializer effect on WebAuthn state",
+      "WebAuthn missing challenge comparison and counter assignment",
+      "Lesson reset GET mutation",
+      "Lesson menu exclusion filtering",
+      "XXE parser conditional settings",
+      "InsecureLogin frontend credentials",
+      "PasswordStorage endpoint exposure",
+      "SampleAttack fixed data",
+      "Flags global map"
+    ],
+    "not_independently_exhaustive": [
+      "Most other rubric lesson paths matched substantive report evidence against rubric, without re-reading every source sink",
+      "MIME/browser/SameSite/HEAD/framework handler runtime behavior",
+      "JJWT/XStream internals and exploitability",
+      "Actual SQL grants and database runtime",
+      "Boot trace activation/header retention",
+      "All novel WebAuthn attestation/compiler/extra-XSS claims",
+      "No exact-anchor automated check repeated"
+    ]
+  },
+  "claims": [
+    {
+      "claim": "P07 malformed mail can break mailbox rendering",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Email.getSummary dereferences contents and getShortSender uses indexOf(@); MailboxController accepts entity without validation. Runtime browser not exercised."
+    },
+    {
+      "claim": "P03 schemas share database identity",
+      "type": "factual",
+      "verified": true,
+      "evidence": "DatabaseConfiguration passes same dataSource to container/lesson Flyway and LessonDataSource; UserService creates schemas authorization dba. Actual grant consequences remain conditional."
+    },
+    {
+      "claim": "P14 credential lookup resets WebAuthn state",
+      "type": "factual",
+      "verified": true,
+      "evidence": "UserService.loadUserByUsername calls initializers; WebAuthnLessonState.initialize removes state. Failed-auth invocation/caching ordering not runtime tested."
+    },
+    {
+      "claim": "P09 active uploaded content executes on management origin",
+      "type": "factual",
+      "verified": false,
+      "evidence": "Source confirms public same-origin static hosting, but MIME/browser execution is conditional and correctly qualified in report."
+    },
+    {
+      "claim": "P18 lesson exclusions are menu-only controls",
+      "type": "factual",
+      "verified": true,
+      "evidence": "LessonMenuService exclusions only skip menu entries; WebSecurityConfig generic authenticated routing does not apply exclusion authorization. Full registration/runtime mapping not re-tested."
+    },
+    {
+      "claim": "Review used no skill/delegation/network and lasted 2152 seconds",
+      "type": "process",
+      "verified": false,
+      "evidence": "Self-reported in process.md; no complete tool transcript/timing telemetry is available to independently establish this."
+    }
+  ],
+  "execution_metrics": {
+    "availability": "No metrics.json or transcript supplied; report/process lengths only, not token usage.",
+    "report_chars": 71096,
+    "process_chars": 53790
+  },
+  "timing": {
+    "executor_duration_seconds_self_reported": 2152,
+    "independently_verified": false,
+    "basis": "process.md says clock-tool interval 2026-10-29 09:01:11–09:37:03 UTC; no timing.json or full transcript."
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "No user_notes.md; process explicitly admits truncated batches and conditional framework/OS behavior."
+    ],
+    "needs_review": [
+      "A5 explicit training-label interpretation",
+      "B4 endpoint-literal versus precise-handler identification",
+      "Composite C25/C33 ancillary clauses"
+    ],
+    "workarounds": [
+      "Self-reported retries of truncated reads/Unicode errors and corrected artifact anchor checker."
+    ]
+  },
+  "ambiguities_for_coordinator": [
+    {
+      "id": "A5",
+      "assigned": 0.5,
+      "alternative": 1,
+      "reason": "Mechanisms exact; deliberate exceptions appear in remediation, not explicit characterization of current global disable. Strict explicit-label interpretation used."
+    },
+    {
+      "id": "B4",
+      "assigned": 0.5,
+      "alternative": 1,
+      "reason": "Exact Assignment7 source lines and .git archive serve described, literal endpoint absent. Strict names-endpoint requirement used."
+    },
+    {
+      "id": "C21/C25/C33",
+      "assigned": "1 each",
+      "alternative": "0.5 each if every ancillary clause required",
+      "reason": "Primary mechanisms at exact classes covered. C21 password-derived hash/hidden menu, C25 HttpOnly and C33 request-derived rpId/origin omitted. Used rubric lenient-on-what/strict-on-where primary-mechanism interpretation; do not silently call full composite coverage."
+    },
+    {
+      "id": "D5",
+      "assigned": 0,
+      "alternative": 1,
+      "reason": "No Critical exploit overclaim and broad training scope is good, but explicit labels and jjwt pin missing. Binary row requires all stated conditions."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "A5/D5",
+        "reason": "Specify whether remediation referencing deliberate exceptions counts as labeling existing configuration; distinguish factual detection from calibration to avoid double penalty."
+      },
+      {
+        "assertion": "B4",
+        "reason": "Specify whether precise class/method-line and .git archive identification suffices without reproducing literal URL."
+      },
+      {
+        "assertion": "C21/C25/C33 and other composite rows",
+        "reason": "Specify independently required submechanisms versus explanatory ancillary details; current half-credit policy is ambiguous for exact primary sinks with omitted secondary details."
+      },
+      {
+        "assertion": "C31",
+        "reason": "Preserve correction/version provenance; retained source has HTML simulation, not raw username logger call."
+      },
+      {
+        "assertion": "SampleAttack bonus",
+        "reason": "Source returns same fixed items independent of requested user; describing this as sensitive cross-user IDOR can reward overstatement."
+      }
+    ],
+    "overall": "Strong sink-based rubric, but compound rows and explicit-label requirements need fixed subcriteria for reproducible scoring."
+  }
+}

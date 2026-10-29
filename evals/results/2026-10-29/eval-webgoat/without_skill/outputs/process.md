@@ -1,0 +1,462 @@
+# Review process
+
+Status: complete.
+
+Measured wall-clock review interval: 2026-10-29 09:01:11 UTC to 2026-10-29 09:37:03 UTC, **35 minutes 52 seconds** (2,152 seconds), using clock-tool readings. This includes source inspection and report preparation through final review checks; final artifact bookkeeping follows that reading. No actual model token-usage counter was available, so no token count is reported.
+
+- Task: blind source-only WebGoat/WebWolf security audit; no audit skill used, no delegation.
+- Start: 2026-10-29 09:01:11 UTC (clock tool).
+- Target: C:/Users/User/Projects/web-security-audit-workspace/webgoat (read-only).
+- Tools: PowerShell through exec_command, rg for inventory/pattern searches, Python for numbered source reads and writing reports; clock tool for timing.
+- No application startup, network requests, build, deployed-service tests, exploit execution or dependency downloads.
+- Inventory: target root listing and rg --files src config. Broad inventory output was truncated; subsequent scoped enumeration and reads supply review evidence.
+- Excluded by instruction: skill directories, evals, parent README, historical reports, answer keys and other output directories. No target README read.
+
+## Source reads
+The following log records files printed with line numbers for manual review. Pattern scans are recorded separately; being scanned is not a claim of full manual review.
+- `src/main/java/org/owasp/webgoat/container/WebSecurityConfig.java` (100 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/WebSecurityConfig.java` (88 lines).
+- `src/main/java/org/owasp/webgoat/server/ParentConfig.java` (10 lines).
+- `src/main/java/org/owasp/webgoat/server/StartWebGoat.java` (58 lines).
+- `src/main/resources/application-webgoat.properties` (87 lines).
+- `src/main/resources/application-webwolf.properties` (60 lines).
+- `Dockerfile` (40 lines).
+- `Dockerfile_desktop` (69 lines).
+- `src/main/java/org/owasp/webgoat/container/users/AdminController.java` (208 lines).
+- `src/main/java/org/owasp/webgoat/container/users/AdminController.java` (208 lines).
+- `src/main/java/org/owasp/webgoat/container/users/AssignmentProgress.java` (51 lines).
+- `src/main/java/org/owasp/webgoat/container/users/DefaultUserInitializer.java` (61 lines).
+- `src/main/java/org/owasp/webgoat/container/users/LessonProgress.java` (89 lines).
+- `src/main/java/org/owasp/webgoat/container/users/RegistrationController.java` (68 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserForm.java` (31 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserProgress.java` (87 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserProgressRepository.java` (13 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserRepository.java` (17 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserService.java` (101 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserSession.java` (20 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserValidator.java` (35 lines).
+- `src/main/java/org/owasp/webgoat/container/users/WebGoatUser.java` (90 lines).
+- `src/main/java/org/owasp/webgoat/container/mailbox/Email.java` (64 lines).
+- `src/main/java/org/owasp/webgoat/container/mailbox/MailboxController.java` (72 lines).
+- `src/main/java/org/owasp/webgoat/container/mailbox/MailboxRepository.java` (15 lines).
+- `src/main/resources/webgoat/templates/mailbox.html` (161 lines).
+- `src/main/java/org/owasp/webgoat/container/users/RegistrationController.java` (68 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserForm.java` (31 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserService.java` (101 lines).
+- `src/main/java/org/owasp/webgoat/container/users/UserRepository.java` (17 lines).
+- `src/main/java/org/owasp/webgoat/container/DatabaseConfiguration.java` (71 lines).
+- `src/main/java/org/owasp/webgoat/container/LessonDataSource.java` (74 lines).
+- `src/main/java/org/owasp/webgoat/container/lessons/LessonConnectionInvocationHandler.java` (40 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/FileServer.java` (147 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/MvcConfiguration.java` (53 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/requests/LandingPage.java` (34 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/requests/Requests.java` (84 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/requests/WebWolfTraceRepository.java` (74 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/user/UserRepository.java` (14 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/user/UserService.java` (33 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/user/WebWolfUser.java` (62 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/WebWolf.java` (44 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/FileUploadExceptionAdvice.java` (36 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/jwt/JWTController.java` (46 lines).
+- `src/main/java/org/owasp/webgoat/webwolf/jwt/JWTToken.java` (195 lines).
+- `src/main/resources/webwolf/templates/requests.html` (58 lines).
+- `src/main/resources/webwolf/templates/files.html` (74 lines).
+- `src/main/resources/webwolf/static/js/fileUpload.js` (11 lines).
+- `src/main/resources/webwolf/static/js/jwt.js` (115 lines).
+- `src/main/java/org/owasp/webgoat/container/MvcConfiguration.java` (249 lines).
+- `src/main/java/org/owasp/webgoat/container/LessonTemplateResolver.java` (72 lines).
+- `src/main/java/org/owasp/webgoat/container/AsciiDoctorTemplateResolver.java` (147 lines).
+- `src/main/java/org/owasp/webgoat/container/asciidoc/EnvironmentExposure.java` (30 lines).
+- `src/main/java/org/owasp/webgoat/container/service/RestartLessonService.java` (51 lines).
+- `src/main/java/org/owasp/webgoat/container/service/EnvironmentService.java` (22 lines).
+- `src/main/java/org/owasp/webgoat/container/controller/StartLesson.java` (40 lines).
+- `src/main/java/org/owasp/webgoat/container/controller/Welcome.java` (40 lines).
+- `src/main/java/org/owasp/webgoat/container/UserInterceptor.java` (57 lines).
+- `src/main/java/org/owasp/webgoat/container/WebGoat.java` (44 lines).
+
+## Incremental evidence notes (2026-10-29)
+- P candidates: fixed admin reset on startup (DefaultUserInitializer 25-44); plaintext passwords (NoOp configs, UserService 47); global CSRF/header disable; GET reset cleans own schema; shared DB connection uses SET SCHEMA only, not separate privilege identity.
+- Confirmed mail source chain: public POST /mail -> save entity with client-bound id and content -> th:utext mail.contents line 142. GET is recipient scoped, DELETE /mail invokes deleteAll without owner/admin restriction. Email sender/contents null/malformed fields can break GET rendering.
+- Confirmed WebWolf upload path: original filename directly resolved, deleteIfExists + copy, no normalize/containment, authenticated POST /fileupload; 1 MB individual upload limit. Static file host shares origin with dashboard.
+- Confirmed trace issues: capture excludes selected paths only; Requests filter default allow and substring identity; cookie/header capture configured; request JSON and path use th:utext. Need distinguish recorded data from unverified Boot recording runtime.
+- Existing controls: regular registration name regex, admin URL and method authority checks, per-recipient mail read, loopback default in properties, nonroot Docker user, escaped upload status/name template.
+- Initial users-directory read hit cp1252 Unicode output failure, then larger retry output truncated; sensitive truncated files re-read separately. Ancillary progress entity portions not all visible, tracked as limited review.
+- Pattern scan: container Java, webgoat templates and goatApp JS for controller mappings, file/SQL execution and HTML sinks.
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge1/Assignment1.java` (40 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge1/Challenge1.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge1/ImageServlet.java` (39 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge5/Assignment5.java` (55 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge5/Challenge5.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge7/Assignment7.java` (101 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge7/Challenge7.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge7/MD5.java` (449 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge7/PasswordResetLink.java` (38 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge8/Assignment8.java` (75 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge8/Challenge8.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/FlagController.java` (37 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/Flags.java` (20 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/Flag.java` (13 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/Assignment2.java` (28 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/ChainedFetchService.java` (105 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/ChainedXmlService.java` (94 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/FeedImportEndpoint.java` (34 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/Challenge2State.java` (43 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/InternalDiagnostic.java` (29 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/NorthstarEndpoints.java` (26 lines).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/Challenge2.java` (19 lines).
+- `src/main/resources/lessons/challenges/js/challenge2.js` (26 lines).
+- `src/main/java/org/owasp/webgoat/container/session/Course.java` (90 lines).
+- `src/main/resources/db/container/V1__init.sql` (72 lines).
+- `src/main/resources/lessons/sqlinjection/db/migration/V2021_03_13_8__grant.sql` (13 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandExecutionService.java` (168 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionSafetyService.java` (35 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionSafetyGate.java` (65 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask2.java` (89 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask3Service.java` (116 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask4Service.java` (142 lines).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask5Service.java` (148 lines).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/CommentsCache.java` (91 lines).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/SimpleXXE.java` (77 lines).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/ContentTypeAssignment.java` (88 lines).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/BlindSendFileAssignment.java` (83 lines).
+- `src/main/java/org/owasp/webgoat/lessons/ssrf/SSRF.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/ssrf/SSRFTask1.java` (45 lines).
+- `src/main/java/org/owasp/webgoat/lessons/ssrf/SSRFTask2.java` (50 lines).
+- `src/main/java/org/owasp/webgoat/lessons/deserialization/InsecureDeserializationTask.java` (60 lines).
+- `src/main/java/org/dummy/insecure/framework/VulnerableTaskHolder.java` (66 lines).
+- `src/main/java/org/owasp/webgoat/lessons/vulnerablecomponents/VulnerableComponentsLesson.java` (53 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileUploadBase.java` (125 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileUpload.java` (41 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileUploadFix.java` (41 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileUploadRemoveUserInput.java` (33 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileUploadRetrieval.java` (112 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/ProfileZipSlip.java` (97 lines).
+- `src/main/java/org/owasp/webgoat/lessons/pathtraversal/PathTraversal.java` (19 lines).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjection.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson10.java` (98 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson2.java` (57 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson3.java` (61 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson4.java` (56 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5.java` (78 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5a.java` (114 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5b.java` (103 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson8.java` (131 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson9.java` (100 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionAdvanced.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionChallenge.java` (79 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionChallengeLogin.java` (45 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionLesson6a.java` (100 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionLesson6b.java` (58 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/advanced/SqlInjectionQuiz.java` (61 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/Servers.java` (67 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlInjectionLesson10a.java` (48 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlInjectionLesson10b.java` (126 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlInjectionLesson13.java` (47 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlInjectionMitigations.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlOnlyInputValidation.java` (38 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/sqlinjection/mitigation/SqlOnlyInputValidationOnKeywords.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/jwt/claimmisuse/JWTHeaderJKUEndpoint.java` (64 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/jwt/claimmisuse/JWTHeaderKIDEndpoint.java` (92 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWTVotesEndpoint.java` (200 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWTRefreshEndpoint.java` (127 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWTSecretKeyEndpoint.java` (74 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/PasswordReset.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/PasswordResetEmail.java` (17 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/QuestionsAssignment.java` (52 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/resetlink/PasswordChangeForm.java` (17 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/ResetLinkAssignment.java` (111 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/ResetLinkAssignmentForgotPassword.java` (106 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/SecurityQuestionAssignment.java` (85 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/SimpleMailAssignment.java` (97 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/TriedQuestions.java` (21 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/PasswordStorage.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/PasswordStorageDataController.java` (72 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/PasswordStorageService.java` (202 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/Stage1HashAssignment.java` (22 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/Stage2SaltAssignment.java` (25 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/Stage3Argon2Assignment.java` (42 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/Stage4PepperAssignment.java` (24 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordstorage/Stage5DisclosureAssignment.java` (22 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/ResetLinkAssignment.java` (111 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/ResetLinkAssignmentForgotPassword.java` (106 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirect.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectMitigationCheck.java` (61 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectQuiz.java` (49 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectRealRedirect.java` (15 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectSecureController.java` (20 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectTask1.java` (48 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectTask2.java` (57 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectTask3.java` (68 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectTask4.java` (82 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpparameterpollution/HttpParameterPollution.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpparameterpollution/ParameterPollutionMitigation.java` (13 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpparameterpollution/ParameterPollutionObservation.java` (51 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpparameterpollution/ParameterPollutionTransfer.java` (56 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/CrossSiteScriptingLesson1.java` (26 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/CrossSiteScriptingLesson5a.java` (79 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/CrossSiteScriptingLesson6a.java` (32 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/stored/CrossSiteScriptingStored.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/stored/StoredCrossSiteScriptingVerifier.java` (32 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/stored/StoredXssComments.java` (97 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/DOMCrossSiteScripting.java` (42 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/xss/js/assignment3.js` (44 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/xss/js/assignment4.js` (30 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/xss/js/stored-xss.js` (45 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webgoat/static/js/goatApp/view/GoatRouter.js` (152 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webgoat/static/js/goatApp/view/LessonContentView.js` (230 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securitymisconfiguration/ActuatorExposureTask.java` (62 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securitymisconfiguration/ConfigHardeningTask.java` (54 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securitymisconfiguration/DefaultCredentialsTask.java` (46 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securitymisconfiguration/SecurityMisconfiguration.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securitymisconfiguration/VerboseErrorTask.java` (72 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDOR.java` (20 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDORDiffAttributes.java` (33 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDOREditOtherProfile.java` (78 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDORLogin.java` (58 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDORViewOtherProfile.java` (49 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDORViewOwnProfile.java` (46 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/IDORViewOwnProfileAltUrl.java` (49 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/idor/UserProfile.java` (114 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/DisplayUser.java` (33 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingAccessControlUserRepository.java` (49 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingFunctionAC.java` (22 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingFunctionACHiddenMenus.java` (30 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingFunctionACUsers.java` (86 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingFunctionACYourHash.java` (35 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/MissingFunctionACYourHashAdmin.java` (36 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/missingac/User.java` (15 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/authbypass/AccountVerificationHelper.java` (68 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/authbypass/AuthBypass.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/authbypass/VerifyAccount.java` (64 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/spoofcookie/encoders/EncDec.java` (59 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/spoofcookie/SpoofCookie.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/spoofcookie/SpoofCookieAssignment.java` (100 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/hijacksession/cas/Authentication.java` (36 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/hijacksession/cas/AuthenticationProvider.java` (9 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/hijacksession/cas/HijackSessionAuthenticationProvider.java` (68 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/hijacksession/HijackSession.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/hijacksession/HijackSessionAssignment.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/CSRF.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/CSRFConfirmFlag1.java` (37 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/CSRFFeedback.java` (95 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/CSRFGetFlag.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/CSRFLogin.java` (26 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/ForgedReviews.java` (96 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/csrf/Review.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/logging/LogBleedingTask.java` (45 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/logging/LogSpoofing.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/logging/LogSpoofingTask.java` (32 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/clientsidefiltering/ClientSideFiltering.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/clientsidefiltering/ClientSideFilteringAssignment.java` (23 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/clientsidefiltering/ClientSideFilteringFreeAssignment.java` (25 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/clientsidefiltering/Salaries.java` (90 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/clientsidefiltering/ShopEndpoint.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/bypassrestrictions/BypassRestrictions.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/bypassrestrictions/BypassRestrictionsFieldRestrictions.java` (41 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/bypassrestrictions/BypassRestrictionsFrontendValidation.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/htmltampering/HtmlTampering.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/htmltampering/HtmlTamperingTask.java` (24 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/insecurelogin/InsecureLogin.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/insecurelogin/InsecureLoginTask.java` (27 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/insecurelogin/js/credentials.js` (6 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/GoatBankCeremonyEndpoints.java` (152 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/SecurityKeyCeremonyEndpoints.java` (202 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnLessonState.java` (141 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnSupport.java` (427 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnAuthenticationAssignment.java` (110 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnRegistrationAssignment.java` (136 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnSecurityKeyAssignment.java` (119 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/Cbor.java` (200 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/lessons/CourseConfiguration.java` (174 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/report/ReportCardController.java` (65 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/EnvironmentService.java` (22 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/asciidoc/EnvironmentExposure.java` (30 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/controller/StartLesson.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/assignments/LessonTrackerInterceptor.java` (79 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/assignments/AttackResultMessageResponseBodyAdvice.java` (45 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/InsecureHmacValidator.java` (50 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackOracle.java` (69 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackSupport.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webwolf/templates/error.html` (42 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/UserValidator.java` (35 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/RegistrationController.java` (68 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/UserService.java` (101 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/session/Course.java` (90 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/CryptoUtil.java` (133 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/SecureDefaultsAssignment.java` (34 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackSessionState.java` (51 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackMitigationAssignment.java` (26 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/LessonResourceScanner.java` (46 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/LessonTemplateResolver.java` (72 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/AsciiDoctorTemplateResolver.java` (147 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/MvcConfiguration.java` (249 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/ProxyAutoConfigController.java` (26 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/HammerHead.java` (27 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/WebWolfRedirect.java` (25 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/application-webgoat.properties` (87 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/application-webwolf.properties` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/LessonMenuService.java` (86 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpbasics/HttpBasics.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpbasics/HttpBasicsExternal.java` (69 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpbasics/HttpBasicsForm.java` (34 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpbasics/HttpBasicsLesson.java` (28 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpbasics/HttpBasicsQuiz.java` (59 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpproxies/HttpBasicsInterceptRequest.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/httpproxies/HttpProxies.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/chromedevtools/ChromeDevTools.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/chromedevtools/NetworkDummy.java` (34 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/chromedevtools/NetworkLesson.java` (33 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securepasswords/SecurePasswords.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/securepasswords/SecurePasswordsAssignment.java` (101 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webwolfintroduction/LandingAssignment.java` (44 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webwolfintroduction/WebWolfIntroduction.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/xxe/js/xxe.js` (82 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/lessons/csrf/js/csrf-review.js` (46 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webgoat/static/js/goatApp/controller/LessonController.js` (161 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/assignments/AttackResult.java` (65 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/requests/Requests.java` (84 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/requests/WebWolfTraceRepository.java` (74 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/FileServer.java` (147 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnLessonState.java` (141 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/WebSecurityConfig.java` (100 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/WebSecurityConfig.java` (88 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/mailbox/Email.java` (64 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/mailbox/MailboxController.java` (72 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webwolf/templates/files.html` (74 lines; compact: blank/import/package lines omitted).
+- `src/main/resources/webwolf/templates/requests.html` (58 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/WebGoatUser.java` (90 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask1.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionCatService.java` (132 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask3Search.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask4Search.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webgoatintroduction/MailAssignment.java` (72 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/SecurityQuestionAssignment.java` (85 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/passwordreset/TriedQuestions.java` (21 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/mitigation/CrossSiteScriptingLesson3.java` (59 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xss/mitigation/CrossSiteScriptingLesson4.java` (35 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/lessontemplate/SampleAttack.java` (63 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/ChainedFetchService.java` (105 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge2/ChainedXmlService.java` (94 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge7/Assignment7.java` (101 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/challenges/challenge8/Assignment8.java` (75 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/DefaultUserInitializer.java` (61 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/DatabaseConfiguration.java` (71 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/server/StartWebGoat.java` (58 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/jwt/JWTController.java` (46 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/CommentsCache.java` (91 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/users/UserForm.java` (31 lines; compact: blank/import/package lines omitted).
+- `Dockerfile` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/ContentTypeAssignment.java` (88 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/SimpleXXE.java` (77 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/webwolf/jwt/JWTToken.java` (195 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnSecurityKeyAssignment.java` (119 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectRealRedirect.java` (15 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/openredirect/OpenRedirectSecureController.java` (20 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cia/CIA.java` (19 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/EncodingAssignment.java` (56 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/XOREncodingAssignment.java` (24 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/HashingAssignment.java` (83 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/SigningAssignment.java` (65 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/deserialization/SerializationHelper.java` (51 lines; compact: blank/import/package lines omitted).
+
+- `src/main/java/org/owasp/webgoat/container/service/HintService.java` (45 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/LabelDebugService.java` (67 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/LabelService.java` (41 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/LessonInfoService.java` (28 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/LessonProgressService.java` (60 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/service/SessionService.java` (32 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/CurrentUser.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/CurrentUsername.java` (18 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/session/LessonSession.java` (48 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/lessons/Lesson.java` (108 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/CommentsEndpoint.java` (25 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/lessons/xxe/Ping.java` (38 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/session/LabelDebugger.java` (40 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/i18n/PluginMessages.java` (67 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/i18n/Messages.java` (36 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/i18n/Language.java` (26 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/AjaxAuthenticationEntryPoint.java` (31 lines; compact: blank/import/package lines omitted).
+- `src/main/java/org/owasp/webgoat/container/assignments/AttackResultBuilder.java` (102 lines; compact: blank/import/package lines omitted).
+
+## Method, tool use, and limitations
+
+- Used source enumeration with `rg --files`, scoped `rg -n` searches for request mappings, execution/deserialization/XML/SQL/file/network sinks, security configuration, initialization, and HTML render methods; PowerShell directory/file reads; and the local Python numbered-source reader. Compact reads omitted imports, package declarations, and blank lines while preserving original line numbers.
+- The Java reader skips `SolutionConstants.java`. No separate answer-key file, archive content, evaluation material, skill directory, parent README, historical report, other agent output directory, or target README was read. Embedded grading comparisons were incidentally visible in ordinary application controller source, including some quiz classes from directory batches; these were not used as an external answer source.
+- Initial repository inventory and some broad multi-file batches were output-truncated. Targeted reads subsequently covered the cited security paths, including WebAuthn state and core helpers, WebWolf capture/rendering/upload code, command services, XML dispatch, mailbox, account setup, and database connection handling. The read manifest records files printed, not a claim that every line in a truncated batch was seen. Some descriptor/DTO/quiz/helper classes remain unreviewed, as listed below.
+- One Windows `rg` command used a wildcard directory argument (`lessons/*/js`) that rg did not expand; it was retried with a concrete root plus JS glob. An initial report apply_patch attempted Delete/Add of the same path and was rejected without changing the file; a subsequent Update patch succeeded. No target edit, execution, or network fallback occurred.
+- A report-anchor checker initially treated a directory reference as a missing file. The checker was corrected to recognize existing directories. The final check below has no missing explicit source paths or out-of-bounds starting line anchors. It does not establish semantic correctness, library behavior, or runtime exploitability.
+- Added corroborating negative searches for further host sinks in server/WebWolf code and model sources for the main templates' generic unescaped `message` slot. No attacker-controlled source for that generic slot was established, so no unsupported finding was added.
+- No application, browser, deployed endpoint, compiler lesson, deserialization payload, database query, outbound request, exploit, build, dependency resolution, or application test suite was run. The only Python execution read source and maintained/validated these report artifacts. Proposed regression checks in report.md were not executed.
+- Runtime-dependent assumptions are explicitly qualified: database grants; Boot exchange recording and sensitive-header retention; browser MIME/HTML/CSRF behavior; servlet HEAD dispatch; OAuth subject mapping; XML provider defaults; JWT parsing/library behavior; OS path rules; and proxy/firewall/TLS configuration.
+- Final report contains 18 platform findings/containment weaknesses, 8 challenges-package findings, and a mechanism-level inventory across the lesson families. The count follows evidenced root causes, not a preset finding cap. Tests, dependency advisory research, binary assets, full standards conformance, and exhaustive frontend/vendor review remain outside the performed source review.
+
+## Final scope accounting
+
+Automated artifact validation resolved explicit J/L/R path anchors against the target and checked starting line bounds; it did not validate semantic conclusions or execute application code.
+
+```json
+{
+  "explicit_anchor_files_checked": 111,
+  "anchor_issues": [],
+  "anchor_files_not_in_read_log": [],
+  "unique_logged_source_file_reads": 304,
+  "main_java_files": 334,
+  "main_java_not_in_numbered_read_log": 52,
+  "report_words": 8631
+}
+```
+
+The following main Java files have no numbered-read entry. Some were inventory/pattern-scanned only; they are not claimed as fully reviewed. Separate answer-key material remained excluded.
+
+- `src/main/java/org/owasp/webgoat/container/asciidoc/OperatingSystemMacro.java`
+- `src/main/java/org/owasp/webgoat/container/asciidoc/UsernameMacro.java`
+- `src/main/java/org/owasp/webgoat/container/asciidoc/WebGoatTmpDirMacro.java`
+- `src/main/java/org/owasp/webgoat/container/asciidoc/WebGoatVersionMacro.java`
+- `src/main/java/org/owasp/webgoat/container/asciidoc/WebWolfMacro.java`
+- `src/main/java/org/owasp/webgoat/container/asciidoc/WebWolfRootMacro.java`
+- `src/main/java/org/owasp/webgoat/container/assignments/AssignmentEndpoint.java`
+- `src/main/java/org/owasp/webgoat/container/assignments/AssignmentHints.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/Assignment.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/Category.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/Hint.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/Initializable.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/LessonInfoModel.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/LessonMenuItem.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/LessonMenuItemType.java`
+- `src/main/java/org/owasp/webgoat/container/lessons/LessonName.java`
+- `src/main/java/org/owasp/webgoat/lessons/challenges/ChallengeIntro.java`
+- `src/main/java/org/owasp/webgoat/lessons/challenges/Email.java`
+- `src/main/java/org/owasp/webgoat/lessons/challenges/SolutionConstants.java`
+- `src/main/java/org/owasp/webgoat/lessons/cia/CIAQuiz.java`
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjection.java`
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask3Flag.java`
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask4Key.java`
+- `src/main/java/org/owasp/webgoat/lessons/commandinjection/CommandInjectionTask5Evaluation.java`
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/Cryptography.java`
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackFirstByteAssignment.java`
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackNoiseAssignment.java`
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttackTagAssignment.java`
+- `src/main/java/org/owasp/webgoat/lessons/cryptography/timing/TimingAttacks.java`
+- `src/main/java/org/owasp/webgoat/lessons/deserialization/InsecureDeserialization.java`
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWT.java`
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWTDecodeEndpoint.java`
+- `src/main/java/org/owasp/webgoat/lessons/jwt/JWTQuiz.java`
+- `src/main/java/org/owasp/webgoat/lessons/jwt/votes/Views.java`
+- `src/main/java/org/owasp/webgoat/lessons/jwt/votes/Vote.java`
+- `src/main/java/org/owasp/webgoat/lessons/lessontemplate/LessonTemplate.java`
+- `src/main/java/org/owasp/webgoat/lessons/vulnerablecomponents/Contact.java`
+- `src/main/java/org/owasp/webgoat/lessons/vulnerablecomponents/ContactImpl.java`
+- `src/main/java/org/owasp/webgoat/lessons/vulnerablecomponents/VulnerableComponents.java`
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/VirtualAuthenticator.java`
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthn.java`
+- `src/main/java/org/owasp/webgoat/lessons/webauthn/WebAuthnQuiz.java`
+- `src/main/java/org/owasp/webgoat/lessons/webgoatintroduction/Email.java`
+- `src/main/java/org/owasp/webgoat/lessons/webgoatintroduction/WebGoatIntroduction.java`
+- `src/main/java/org/owasp/webgoat/lessons/xss/Comment.java`
+- `src/main/java/org/owasp/webgoat/lessons/xss/CrossSiteScripting.java`
+- `src/main/java/org/owasp/webgoat/lessons/xss/CrossSiteScriptingQuiz.java`
+- `src/main/java/org/owasp/webgoat/lessons/xss/DOMCrossSiteScriptingVerifier.java`
+- `src/main/java/org/owasp/webgoat/lessons/xss/mitigation/CrossSiteScriptingMitigation.java`
+- `src/main/java/org/owasp/webgoat/lessons/xxe/Comment.java`
+- `src/main/java/org/owasp/webgoat/lessons/xxe/User.java`
+- `src/main/java/org/owasp/webgoat/lessons/xxe/XXE.java`

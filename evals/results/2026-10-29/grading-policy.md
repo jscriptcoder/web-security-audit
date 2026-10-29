@@ -1,0 +1,25 @@
+# Retry grading policy (2026-10-29)
+
+Frozen before reading any retry report. Use the existing Juice Shop 40-row rubric and nine separate bonus items. Use the WebGoat rubric's separate A/B/C/D scores, including its specified half credit. A full hit has `passed: true`; a half hit has `passed: false` and `score: 0.5` in machine-readable grades. Weighted scores are separate from binary pass rates. Do not combine lesson coverage with detection into a headline score.
+
+For WebGoat A8, apply the correction already identified in the October 14 handoff: credit the exposure list plus unauthenticated access with bounded metadata/detailed-health impact. Do not require or reward an unsupported claim that secret values are exposed. Default sanitization is documented by [Spring Boot](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.sanitization), checked on October 29. Unsanitized value disclosure needs explicit configuration or runtime evidence. Record any overclaim separately. The historical rubric and historical grades remain unchanged; this addendum applies to both retry configurations.
+
+Read and save the first report's per-row grading before opening its counterpart. Use evidence in the saved report, not findings from the coordinator or other audit. Record false claims and calibration separately. New findings beyond the rubric require source verification before calling them valid. Do not equate an unverified claim with a false positive. Review process notes as self-reported evidence; full execution transcripts are not automatically available.
+
+No change to the skill or target copies is part of this retry. The retained copies match the October 14 hashes, but upstream commit provenance and the documented scrub limitations remain unresolved. One fresh pair per target is a small sample, not a variance estimate. Exact model/settings and token telemetry are unavailable unless the runtime later exposes them.
+
+## Source correction discovered while grading WebGoat with-skill
+
+The assigned grader identified, and the coordinator independently confirmed, that `lessons/logging/LogSpoofingTask.java` changes newlines into `<br/>` and returns `AttackResult` HTML output; it contains no logger call. `LogBleedingTask` separately logs a Base64 demo secret at INFO. C31's claim that LogSpoofingTask writes raw usernames into a log is inaccurate for the retained source. Credit a source-correct inventory of these files, including an explicit rejection of the false logger premise. Apply this equally to the subsequent baseline grade. This correction was discovered after the with-skill report was read, unlike the predeclared A8 correction; retain that ordering and do not rewrite historical grades. No row or denominator is added or removed.
+
+## Juice Shop adjudication after independent grades
+
+Keep G31 conservative for both reports: exposed usable TOTP seeds do not by themselves establish that the report identified plaintext-at-rest storage. Both receive zero on G31; broader matching adds one point to each. G11 requires the complaint-upload validation mechanism, not the distinct memory-upload or metric-cardinality issue; neither report earns it.
+
+Credit B6's explicitly listed public-IaC subcase in both reports. Credit B8 under its explicit "or similar" wording because both reports trace attacker-controlled SVG bytes to same-origin active-document publication, rather than merely noticing an accepted extension. Neither earns credit for the specific delivery-address path; requiring that exact path instead would remove one bonus point from each. Raw grades and coordinator decisions are retained. Final Juice Shop scores are 35/40 with skill and 33/40 without, with 6/9 bonus each. These ambiguity choices do not change the pair's two-point core difference or tied bonus result.
+
+## WebGoat adjudication after both independent grades
+
+Give the baseline full A5 credit: its remediation explicitly calls for isolating deliberate lesson exceptions, substantively the same labeling accepted in the with-skill report. Requiring that acknowledgment in a particular subsection would grade presentation rather than the intended distinction. Give baseline B4 full credit: the challenge 7 section names `Assignment7.java:96-99` and the deliberately served `.git` archive, identifying the endpoint and disclosure mechanism without spelling the complete URI. The rubric does not demand a verbatim URI. Preserve the original half-credit decisions in `grading-independent.json`.
+
+Keep the with-skill B1 partial because it names the PIN/image classes but omits the embedded-byte disclosure mechanism. Keep its C7 partial for the unestablished unsigned-token mechanism and C23 partial because the second lesson is named only at package level rather than its sink class. Both reports fail D5's explicit plaintext-password training label and jjwt-pin expectation; neither failure establishes a severity overclaim. Final WebGoat scores are A/B/C/D = 12/6.5/33/5 with skill and 12/7/34/5 without, out of 12/7/34/6 respectively.

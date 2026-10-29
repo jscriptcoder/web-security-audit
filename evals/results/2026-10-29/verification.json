@@ -1,0 +1,25 @@
+{
+  "targets": {
+    "juice-shop": {
+      "sha256": "47771c46bb9649751f9599aa47ac1af80444d460d26c6530f4ff920210173637",
+      "matches_before": true,
+      "files": 999
+    },
+    "webgoat": {
+      "sha256": "e3bd8fff58dcc591ff9b668173a27f35b12a46ed5e69d705eae8a509bc7f1a6a",
+      "matches_before": true,
+      "files": 752
+    }
+  },
+  "skill_unchanged": true,
+  "repository_tests": {
+    "command": "python -m unittest discover tests -v",
+    "passed": 41,
+    "failed": 0,
+    "sandbox_note": "Initial run had 26 temporary-directory permission errors; escalated rerun passed all 41 tests."
+  },
+  "inventory_smoke": {
+    "fixture": "evals/fixtures/spring-orders",
+    "pattern_errors": 0
+  }
+}

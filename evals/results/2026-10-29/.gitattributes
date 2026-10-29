@@ -1,0 +1,2 @@
+# Preserve retained evidence bytes so artifact-hashes.json survives checkout.
+* -text

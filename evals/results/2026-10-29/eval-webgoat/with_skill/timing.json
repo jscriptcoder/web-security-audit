@@ -1,0 +1,5 @@
+{
+  "total_duration_seconds": null,
+  "total_tokens": null,
+  "note": "Completion notification exposed neither duration nor tokens."
+}
